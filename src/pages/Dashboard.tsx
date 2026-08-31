@@ -1,6 +1,5 @@
 import QuestCard from "../components/QuestCard";
 import XPBar from "../components/XPBar";
-import { calculateLevel, getXPIntoCurrentLevel } from "../utils/levelSystem";
 import type { Quest, Player } from "../types/game";
 
 interface DashboardProps {
@@ -9,7 +8,10 @@ interface DashboardProps {
   onComplete: (id: string) => void;
   onEndDay: () => void;
   allQuestsCompleted: boolean;
+  level: number;
+  xpIntoLevel: number;
 }
+
 
 function Dashboard({
   quests,
@@ -17,27 +19,24 @@ function Dashboard({
   onComplete,
   onEndDay,
   allQuestsCompleted,
+  level,
+  xpIntoLevel
 }: DashboardProps) {
-  const totalXP = quests
-    .filter((quest) => quest.completed)
-    .reduce((total, quest) => total + quest.xpReward, 0);
-
-  const level = calculateLevel(totalXP);
-  const xpIntoLevel = getXPIntoCurrentLevel(totalXP);
-
+  
   return (
     <main>
       <h1>System Dashboard</h1>
-
-      <p>STREAK: {player.streak} 🔥</p>
+    <p>STREAK: {player.progress.currentStreak} 🔥</p>
+      
 
       <XPBar level={level} currentXP={xpIntoLevel} />
 
       <p>
-        STR {player.strength} | INT {player.intelligence} | VIT{" "}
-        {player.vitality} | FOC {player.focus} | DIS {player.discipline}
-      </p>
-      <p>COINS: {player.coins} 🔥</p>
+    STR {player.stats.strength} | INT {player.stats.intelligence} | VIT{" "}
+    {player.stats.vitality} | FOC {player.stats.focus} | DIS{" "}
+    {player.stats.discipline} | CON {player.stats.consistency}
+     </p>
+      <p>COINS: {player.progress.coins} 🔥</p>
 
       {quests.map((quest) => (
         <QuestCard key={quest.id} quest={quest} onComplete={onComplete} />
