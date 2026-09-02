@@ -9,6 +9,8 @@ import { initialPlayer } from "./data/player";
 import { calculateLevel, getXPIntoCurrentLevel } from "./utils/levelSystem";
 import type { Quest, Player, Achievement } from "./types/game";
 import LevelUpOverlay from "./components/LevelUpOverlay";
+import Login from "./pages/Login";
+import { useAuth } from "./lib/AuthContext";
 
 function App() {
   const [quests, setQuests] = useState<Quest[]>(initialQuests);
@@ -18,6 +20,7 @@ function App() {
     initialAchievements
   );
   const [totalQuestsCompleted, setTotalQuestsCompleted] = useState(0);
+  const { user, loading: authLoading } = useAuth();
  
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [levelUpValue, setLevelUpValue] = useState<number | null>(null); 
@@ -161,7 +164,9 @@ setPlayer((currentPlayer) => {
     })
   );
 }, [totalQuestsCompleted, player, previousLevel, level]);
-    if (loading || !player) return <p>Loading your save file...</p>;
+  if (authLoading) return <p>Checking session...</p>;
+   if (!user) return <Login />;
+   if (loading || !player) return <p>Loading your save file...</p>;
    return (
     <>
       <Toast message={toastMessage} />
