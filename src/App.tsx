@@ -3,79 +3,116 @@ import { Routes, Route, Link, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Status from "./pages/Status";
 import Toast from "./components/Toast";
-import { initialQuests } from "./data/quests";
-import { initialAchievements } from "./data/achievements";
-import { initialPlayer } from "./data/player";
 import { calculateLevel, getXPIntoCurrentLevel } from "./utils/levelSystem";
-import type { Quest, Player, Achievement } from "./types/game";
+import type { Quest, Player, Achievement, StatName } from "./types/game";
 import LevelUpOverlay from "./components/LevelUpOverlay";
 import Login from "./pages/Login";
 import { useAuth } from "./lib/AuthContext";
-
+import { fetchPlayer, savePlayerProgress } from "./lib/playerData";
+import { fetchQuests, recordQuestCompletion, addQuest, deactivateQuest } from "./lib/questsData";
+import { fetchAchievements, unlockAchievement } from "./lib/achievementsData";
+type AchievementRow = {
+  id: string;
+  requirement_type: string;
+  requirement_value: number;
+};
 function App() {
-  const [quests, setQuests] = useState<Quest[]>(initialQuests);
+  const { user, loading: authLoading } = useAuth();
+
+  const [quests, setQuests] = useState<Quest[]>([]);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
-  const [achievements, setAchievements] = useState<Achievement[]>(
-    initialAchievements
-  );
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievementRows, setAchievementRows] = useState<AchievementRow[]>([]);
   const [totalQuestsCompleted, setTotalQuestsCompleted] = useState(0);
-  const { user, loading: authLoading } = useAuth();
- 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [levelUpValue, setLevelUpValue] = useState<number | null>(null); 
-   const [previousLevel, setPreviousLevel] = useState(1);
 
-useEffect(() => {
-  setPlayer(initialPlayer);
-  setLoading(false);
-}, []);
-  
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [levelUpValue, setLevelUpValue] = useState<number | null>(null);
+  const [previousLevel, setPreviousLevel] = useState(1);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      fetchPlayer(user.id),
+      fetchQuests(user.id),
+      fetchAchievements(user.id),
+    ]).then(([fetchedPlayer, fetchedQuests, achievementData]) => {
+      setPlayer(fetchedPlayer);
+      setQuests(fetchedQuests);
+      setAchievements(achievementData.achievements);
+      setAchievementRows(achievementData.rows);
+      setLoading(false);
+    });
+  }, [user]);
+
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 2000);
   };
 
-  const completeQuest = (id: string) => {
+  const completeQuest = async (id: string) => {
     const quest = quests.find((q) => q.id === id);
-    if (!quest || quest.completed) return;
-    if (!player) return; 
+    if (!quest || quest.completed || !player || !user) return;
+
+    const wasRecorded = await recordQuestCompletion(
+      user.id,
+      quest.id,
+      quest.xpReward,
+      quest.coinReward
+    );
+    if (!wasRecorded) return;
 
     setQuests((currentQuests) =>
-      currentQuests.map((q) =>
-        q.id === id ? { ...q, completed: true } : q
-      )
+      currentQuests.map((q) => (q.id === id ? { ...q, completed: true } : q))
     );
-setPlayer((currentPlayer) => {
-  if (!currentPlayer) return currentPlayer;
 
-  return {
-    ...currentPlayer,
+    const updatedPlayer: Player = {
+      ...player,
+      progress: {
+        ...player.progress,
+        totalXP: player.progress.totalXP + quest.xpReward,
+        coins: player.progress.coins + quest.coinReward,
+      },
+      stats: {
+        ...player.stats,
+        [quest.statReward.stat]:
+          player.stats[quest.statReward.stat] + quest.statReward.amount,
+      },
+    };
 
-    progress: {
-      ...currentPlayer.progress,
-      totalXP:
-        currentPlayer.progress.totalXP + quest.xpReward,
-      coins:
-        currentPlayer.progress.coins + quest.coinReward,
-    },
-
-    stats: {
-      ...currentPlayer.stats,
-      [quest.statReward.stat]:
-        currentPlayer.stats[quest.statReward.stat] +
-        quest.statReward.amount,
-    },
-  };
-});
+    setPlayer(updatedPlayer);
+    savePlayerProgress(user.id, updatedPlayer);
 
     setTotalQuestsCompleted((count) => count + 1);
-
-
     showToast(`QUEST COMPLETE  +${quest.xpReward} XP`);
   };
+   const handleAddQuest = async (quest: {
+  title: string;
+  description: string;
+  category: string;
+  xpReward: number;
+  coinReward: number;
+  stat: StatName;
+  statAmount: number;
+}) => {
+  if (!user) return;
+  const success = await addQuest(user.id, quest);
+  if (success) {
+    const refreshedQuests = await fetchQuests(user.id);
+    setQuests(refreshedQuests);
+    showToast(`NEW QUEST ADDED: ${quest.title}`);
+  }
+};
 
-  const allQuestsCompleted = quests.every((quest) => quest.completed);
+const handleRemoveQuest = async (id: string) => {
+  if (!user) return;
+  const success = await deactivateQuest(user.id, id);
+  if (success) {
+    setQuests((current) => current.filter((q) => q.id !== id));
+  }
+};
+  const allQuestsCompleted =
+    quests.length > 0 && quests.every((quest) => quest.completed);
 
   const totalXP = player?.progress.totalXP ?? 0;
 
@@ -83,91 +120,90 @@ setPlayer((currentPlayer) => {
   const xpIntoLevel = getXPIntoCurrentLevel(totalXP);
 
   const endDay = () => {
-  const incompleteCount = quests.filter(
-    (quest) => !quest.completed
-  ).length;
+    if (!player || !user) return;
 
-  if (incompleteCount === 0) {
-    setPlayer((currentPlayer) => {
-      if (!currentPlayer) return currentPlayer;
+    const incompleteCount = quests.filter((quest) => !quest.completed).length;
 
-      return {
-        ...currentPlayer,
+    let updatedPlayer: Player;
+
+    if (incompleteCount === 0) {
+      updatedPlayer = {
+        ...player,
         progress: {
-          ...currentPlayer.progress,
-          currentStreak:
-            currentPlayer.progress.currentStreak + 1,
-        },
-      };
-    });
-
-    showToast("DAY COMPLETE  +1 STREAK");
-  } else {
-    setPlayer((currentPlayer) => {
-      if (!currentPlayer) return currentPlayer;
-
-      return {
-        ...currentPlayer,
-        progress: {
-          ...currentPlayer.progress,
-          currentStreak: 0,
-          coins: Math.max(
-            0,
-            currentPlayer.progress.coins -
-              incompleteCount * 5
+          ...player.progress,
+          currentStreak: player.progress.currentStreak + 1,
+          bestStreak: Math.max(
+            player.progress.bestStreak,
+            player.progress.currentStreak + 1
           ),
         },
       };
-    });
-
-    showToast("DAY ENDED  STREAK RESET");
-  }
-
-  setQuests((currentQuests) =>
-    currentQuests.map((quest) => ({
-      ...quest,
-      completed: false,
-    }))
-  );
-};
-
- useEffect(() => {
-  if (!player) return;
-
-  if (level > previousLevel) {
-    setLevelUpValue(level);
-    setPreviousLevel(level);
-    setTimeout(() => setLevelUpValue(null), 2500);
-  }
-
-  setAchievements((currentAchievements) =>
-    currentAchievements.map((achievement) => {
-      if (achievement.unlocked) return achievement;
-
-      let earned = false;
-      if (achievement.id === "first-quest" && totalQuestsCompleted >= 1) {
-        earned = true;
-      }
-      if (achievement.id === "week-one" && player.progress.currentStreak >= 7) {
-  earned = true;
-      }
-      if (achievement.id === "level-five" && level >= 5) {
-        earned = true;
-      }
-      if (achievement.id === "rich" &&player.progress.coins >= 100) {
-  earned = true;
+      showToast("DAY COMPLETE  +1 STREAK");
+    } else {
+      updatedPlayer = {
+        ...player,
+        progress: {
+          ...player.progress,
+          currentStreak: 0,
+          coins: Math.max(0, player.progress.coins - incompleteCount * 5),
+        },
+      };
+      showToast("DAY ENDED  STREAK RESET");
     }
 
-      if (earned) showToast(`ACHIEVEMENT UNLOCKED: ${achievement.title}`);
+    setPlayer(updatedPlayer);
+    savePlayerProgress(user.id, updatedPlayer);
 
-      return earned ? { ...achievement, unlocked: true } : achievement;
-    })
-  );
-}, [totalQuestsCompleted, player, previousLevel, level]);
+    setQuests((currentQuests) =>
+      currentQuests.map((quest) => ({ ...quest, completed: false }))
+    );
+  };
+
+  useEffect(() => {
+    if (!player || !user || achievementRows.length === 0) return;
+
+    if (level > previousLevel) {
+      setLevelUpValue(level);
+      setPreviousLevel(level);
+      setTimeout(() => setLevelUpValue(null), 2500);
+    }
+
+    achievementRows.forEach((row) => {
+      const already = achievements.find((a) => a.id === row.id)?.unlocked;
+      if (already) return;
+
+      let earned = false;
+      if (row.requirement_type === "quests_completed") {
+        earned = totalQuestsCompleted >= row.requirement_value;
+      }
+      if (row.requirement_type === "streak") {
+        earned = player.progress.currentStreak >= row.requirement_value;
+      }
+      if (row.requirement_type === "level") {
+        earned = level >= row.requirement_value;
+      }
+      if (row.requirement_type === "coins") {
+        earned = player.progress.coins >= row.requirement_value;
+      }
+
+      if (earned) {
+        unlockAchievement(user.id, row.id);
+        setAchievements((current) =>
+          current.map((a) =>
+            a.id === row.id ? { ...a, unlocked: true } : a
+          )
+        );
+        const title = achievements.find((a) => a.id === row.id)?.title ?? "Achievement";
+        showToast(`ACHIEVEMENT UNLOCKED: ${title}`);
+      }
+    });
+  }, [totalQuestsCompleted, player, previousLevel, level, achievementRows]);
+
   if (authLoading) return <p>Checking session...</p>;
-   if (!user) return <Login />;
-   if (loading || !player) return <p>Loading your save file...</p>;
-   return (
+  if (!user) return <Login />;
+  if (loading || !player) return <p>Loading your save file...</p>;
+
+  return (
     <>
       <Toast message={toastMessage} />
       <LevelUpOverlay level={levelUpValue} />
@@ -187,20 +223,26 @@ setPlayer((currentPlayer) => {
               player={player}
               onComplete={completeQuest}
               onEndDay={endDay}
+              onAddQuest={handleAddQuest}
+              onRemoveQuest={handleRemoveQuest}
               allQuestsCompleted={allQuestsCompleted}
-              level={level} 
+              level={level}
               xpIntoLevel={xpIntoLevel}
-              
             />
           }
         />
         <Route
           path="/status"
           element={
-            <Status level={level} xpIntoLevel={xpIntoLevel} player={player} achievements={achievements} />
+            <Status
+              level={level}
+              xpIntoLevel={xpIntoLevel}
+              player={player}
+              achievements={achievements}
+            />
           }
         />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>
   );
