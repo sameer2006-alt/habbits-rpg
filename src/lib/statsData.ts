@@ -37,16 +37,16 @@ export async function fetchStats(userId: string): Promise<StatsSummary> {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
-    const count = data.filter((r) => r.completed_at.slice(0, 10) === dateStr).length;
+    const count = data.filter((r) => r.completed_at && r.completed_at.slice(0, 10) === dateStr).length;
     days.push({ date: dateStr, count });
   }
 
-  const recent: CompletionRecord[] = data.slice(0, 20).map((r: any) => ({
+  const recent: CompletionRecord[] = data.slice(0, 20).map((r) => ({
     id: r.id,
-    questTitle: r.quests?.title ?? 'Unknown Quest',
-    completedAt: r.completed_at,
-    xpEarned: r.xp_earned,
-    coinsEarned: r.coins_earned,
+    questTitle: (r.quests as { title?: string } | null)?.title ?? 'Unknown Quest',
+    completedAt: r.completed_at ?? new Date().toISOString(),
+    xpEarned: r.xp_earned ?? 0,
+    coinsEarned: r.coins_earned ?? 0,
   }));
 
   return { totalCompletions, totalXPEarned, totalCoinsEarned, completionsLast7Days: days, recent };
