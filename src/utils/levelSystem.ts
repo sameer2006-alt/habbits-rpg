@@ -1,3 +1,5 @@
+import { getRankDefinition } from "../data/ranks";
+
 export function getRequiredXP(level: number): number {
   return Math.floor(100 * Math.pow(level, 1.35));
 }
@@ -17,3 +19,8 @@ export function getXPIntoCurrentLevel(totalXP: number): number {
   }
   return totalXP;
 }
+
+export function getRankTierName(rank: string): string {
+  return getRankDefinition(rank).name;
+}
+

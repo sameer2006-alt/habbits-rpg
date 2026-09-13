@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { StatName } from "../types/game";
+import { QUEST_REWARD_LIMITS, validateAndSanitizeQuestReward } from "../data/quests";
 
 interface AddQuestFormProps {
   onSubmit: (quest: {
@@ -36,25 +37,34 @@ export default function AddQuestForm({ onSubmit, onCancel }: AddQuestFormProps) 
   const [xpReward, setXpReward] = useState(50);
   const [coinReward, setCoinReward] = useState(10);
   const [statAmount, setStatAmount] = useState(2);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const applyPreset = (preset: keyof typeof PRESETS) => {
     setXpReward(PRESETS[preset].xp);
     setCoinReward(PRESETS[preset].coins);
     setStatAmount(PRESETS[preset].stat);
+    setErrorMessage(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const validation = validateAndSanitizeQuestReward(xpReward, coinReward, statAmount);
+    if (!validation.valid) {
+      setErrorMessage(validation.error || "Reward values are outside allowed limits.");
+      return;
+    }
+
+    setErrorMessage(null);
     onSubmit({
       title: title.trim(),
       description: description.trim(),
       category: stat.toUpperCase(),
-      xpReward,
-      coinReward,
+      xpReward: validation.sanitized.xpReward,
+      coinReward: validation.sanitized.coinReward,
       stat,
-      statAmount,
+      statAmount: validation.sanitized.statAmount,
     });
   };
 
@@ -100,34 +110,55 @@ export default function AddQuestForm({ onSubmit, onCancel }: AddQuestFormProps) 
       </div>
 
       <div>
-        <label>XP reward: </label>
+        <label>XP reward (1 - {QUEST_REWARD_LIMITS.maxXP}): </label>
         <input
           type="number"
-          min={0}
+          min={QUEST_REWARD_LIMITS.minXP}
+          max={QUEST_REWARD_LIMITS.maxXP}
+          step={1}
           value={xpReward}
-          onChange={(e) => setXpReward(Number(e.target.value))}
+          onChange={(e) => {
+            setXpReward(Number(e.target.value));
+            setErrorMessage(null);
+          }}
         />
       </div>
 
       <div>
-        <label>Coin reward: </label>
+        <label>Coin reward (0 - {QUEST_REWARD_LIMITS.maxCoins}): </label>
         <input
           type="number"
-          min={0}
+          min={QUEST_REWARD_LIMITS.minCoins}
+          max={QUEST_REWARD_LIMITS.maxCoins}
+          step={1}
           value={coinReward}
-          onChange={(e) => setCoinReward(Number(e.target.value))}
+          onChange={(e) => {
+            setCoinReward(Number(e.target.value));
+            setErrorMessage(null);
+          }}
         />
       </div>
 
       <div>
-        <label>Stat amount: </label>
+        <label>Stat amount (0 - {QUEST_REWARD_LIMITS.maxStatReward}): </label>
         <input
           type="number"
-          min={0}
+          min={QUEST_REWARD_LIMITS.minStatReward}
+          max={QUEST_REWARD_LIMITS.maxStatReward}
+          step={1}
           value={statAmount}
-          onChange={(e) => setStatAmount(Number(e.target.value))}
+          onChange={(e) => {
+            setStatAmount(Number(e.target.value));
+            setErrorMessage(null);
+          }}
         />
       </div>
+
+      {errorMessage && (
+        <div style={{ color: "#ef4444", fontSize: "0.9rem", margin: "8px 0" }}>
+          {errorMessage}
+        </div>
+      )}
 
       <button type="submit">Create Quest</button>{" "}
       <button type="button" onClick={onCancel}>Cancel</button>
