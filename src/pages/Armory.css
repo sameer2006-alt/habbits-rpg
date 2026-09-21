@@ -1,0 +1,1299 @@
+/**
+ * Armory & Loadout Chamber Scoped Stylesheet
+ * Strictly scoped to .armory-root to prevent any global CSS pollution.
+ * Visual Source of Truth: Stitch MCP "Hunter Armory & Loadout Chamber"
+ */
+
+.armory-root {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: var(--text-primary, #eee9ee);
+  font-family: var(--font-body, "Inter", sans-serif);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .armory-root {
+    padding: 2rem 1.5rem 4rem;
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .armory-root {
+    padding: 2.5rem 2rem 5rem;
+    gap: 2rem;
+  }
+}
+
+/* ==========================================================================
+   HERO CHAMBER BANNER
+   ========================================================================== */
+
+.armory-hero-banner {
+  position: relative;
+  border-radius: var(--radius-xl, 12px);
+  background: linear-gradient(135deg, rgba(24, 22, 27, 0.96) 0%, rgba(14, 14, 17, 0.98) 100%);
+  border: 1px solid rgba(67, 50, 53, 0.6);
+  box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.85);
+  padding: 1.25rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .armory-hero-banner {
+    padding: 1.75rem 2rem;
+    gap: 1.5rem;
+  }
+}
+
+.armory-hero-banner::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.armory-hero-top {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .armory-hero-top {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+}
+
+.armory-hero-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.armory-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--crimson-light, #ffb4ab);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.armory-hero-tag-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--crimson-vivid, #dc2626);
+  box-shadow: 0 0 8px var(--crimson-vivid, #dc2626);
+  display: inline-block;
+}
+
+.armory-hero-title {
+  margin: 0;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff6f5;
+  line-height: 1.15;
+}
+
+@media (min-width: 768px) {
+  .armory-hero-title {
+    font-size: 2.25rem;
+  }
+}
+
+.armory-hero-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.45;
+  max-width: 620px;
+}
+
+/* Hunter Quick Identity Block */
+.armory-identity-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(36, 32, 37, 0.85);
+  border: 1px solid rgba(67, 50, 53, 0.6);
+  border-radius: var(--radius-xl, 12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.armory-identity-avatar-box {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-highest, #2e2930);
+  flex-shrink: 0;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.armory-identity-rank-tag {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold-amber, #f59e0b);
+}
+
+.armory-identity-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.armory-identity-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.armory-identity-name {
+  margin: 0;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.armory-identity-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: var(--crimson-light, #ffb4ab);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.armory-identity-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-dim, #64748b);
+  font-family: var(--font-mono, monospace);
+}
+
+.armory-identity-telemetry strong {
+  color: var(--text-primary, #eee9ee);
+}
+
+/* Quick Reference Guide Bar */
+.armory-quick-guide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(7, 7, 9, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(67, 50, 53, 0.4);
+  font-size: 0.72rem;
+  color: var(--text-dim, #64748b);
+  position: relative;
+  z-index: 1;
+}
+
+.armory-quick-guide-item strong {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.armory-quick-guide-sep {
+  color: rgba(67, 50, 53, 0.6);
+}
+
+/* ==========================================================================
+   TABS NAVIGATION
+   ========================================================================== */
+
+.armory-tab-bar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .armory-tab-bar {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+.armory-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg, 8px);
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  color: var(--text-secondary, #c9b6b6);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+}
+
+.armory-tab-btn:hover {
+  background: var(--surface-container, #18161b);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.armory-tab-btn--active {
+  background: linear-gradient(135deg, #dc2626 0%, #93000b 100%) !important;
+  border-color: #ffb4ab !important;
+  color: #fff6f5 !important;
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.45) !important;
+}
+
+.armory-tab-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.armory-tab-sub {
+  font-size: 0.6875rem;
+  color: var(--text-dim, #64748b);
+  margin-top: 0.2rem;
+  font-family: var(--font-body, "Inter", sans-serif);
+}
+
+.armory-tab-btn--active .armory-tab-sub {
+  color: rgba(255, 246, 245, 0.85);
+}
+
+/* Feedback alert toast */
+.armory-alert-box {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(20, 9, 11, 0.95);
+  border: 1px solid;
+  font-size: 0.8125rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.armory-alert-box--success {
+  border-color: #10b981;
+  color: #86efac;
+}
+
+.armory-alert-box--error {
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+/* ==========================================================================
+   TAB 1: EQUIPMENT CHAMBER (Active Gear + Power Score + Effective Stats)
+   ========================================================================== */
+
+.armory-equipment-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .armory-equipment-layout {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 1.75rem;
+    align-items: start;
+  }
+}
+
+/* Active Gear Matrix Section */
+.armory-section-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .armory-section-card {
+    padding: 1.5rem;
+  }
+}
+
+.armory-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(67, 50, 53, 0.4);
+}
+
+.armory-section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.armory-section-title {
+  margin: 0;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.armory-section-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--surface-container, #18161b);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.6875rem;
+  color: var(--text-dim, #64748b);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Tactical Gear Slots */
+.armory-gear-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.armory-gear-slot-item {
+  background: var(--surface-container, #18161b);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-lg, 8px);
+  padding: 1rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.armory-gear-slot-item:hover {
+  background: var(--surface-high, #242025);
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.armory-gear-slot-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.armory-gear-slot-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.armory-gear-slot-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--surface-highest, #2e2930);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.armory-gear-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.armory-gear-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.armory-gear-slot-category {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.armory-gear-slot-rarity-pill {
+  padding: 0.1rem 0.375rem;
+  border-radius: 3px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.armory-gear-slot-name {
+  margin: 0;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.armory-gear-slot-bonuses {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.armory-gear-slot-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.armory-gear-slot-qty {
+  font-size: 0.6875rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--surface-highest, #2e2930);
+  color: var(--text-dim, #64748b);
+  font-weight: 600;
+}
+
+.armory-gear-slot-equipped-tag {
+  font-size: 0.6875rem;
+  color: var(--crimson-light, #ffb4ab);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.armory-gear-slot-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim, #64748b);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.armory-gear-slot-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.armory-gear-action-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.armory-gear-action-btn--change {
+  background: var(--surface-highest, #2e2930);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.armory-gear-action-btn--change:hover {
+  background: var(--surface-bright, #353438);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.armory-gear-action-btn--unequip {
+  background: transparent;
+  color: #ef4444;
+  padding: 0.35rem 0.5rem;
+}
+
+.armory-gear-action-btn--unequip:hover {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Empty socket state */
+.armory-gear-slot-empty {
+  padding: 1.25rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.armory-gear-slot-empty-title {
+  color: var(--text-dim, #64748b);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Total active gear attributes banner */
+.armory-total-boost-banner {
+  background: var(--surface-highest, #2e2930);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.armory-total-boost-title {
+  font-size: 0.6875rem;
+  color: var(--text-dim, #64748b);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.armory-total-boost-values {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--gold-highlight, #ffb77d);
+  letter-spacing: 0.04em;
+}
+
+/* Companion Column: Power Score + Effective Stats */
+.armory-stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Combat Power Card */
+.armory-power-score-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.armory-power-score-card::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.armory-power-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.armory-power-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+}
+
+.armory-power-num-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.armory-power-number {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.armory-power-unit {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--crimson-light, #ffb4ab);
+}
+
+.armory-power-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: #070709;
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.armory-power-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #dc2626 0%, #ffb4ab 100%);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.8);
+}
+
+.armory-power-progress-sub {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-dim, #64748b);
+  margin-top: 0.25rem;
+}
+
+/* Accordion Breakdown */
+.armory-formula-accordion {
+  background: var(--surface-container, #18161b);
+  border: 1px solid rgba(67, 50, 53, 0.4);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.armory-formula-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-primary, #eee9ee);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.armory-formula-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  color: var(--text-secondary, #c9b6b6);
+}
+
+.armory-formula-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Effective Stats Breakdown */
+.armory-effective-stats-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .armory-effective-stats-card {
+    padding: 1.5rem;
+  }
+}
+
+.armory-formula-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  background: var(--surface-highest, #2e2930);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-dim, #64748b);
+  letter-spacing: 0.06em;
+}
+
+.armory-stat-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.armory-stat-breakdown-item {
+  background: var(--surface-container, #18161b);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.armory-stat-breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.armory-stat-breakdown-name-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.armory-stat-breakdown-name {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.armory-stat-breakdown-sub {
+  font-size: 0.6875rem;
+  color: var(--text-dim, #64748b);
+}
+
+.armory-stat-breakdown-math {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.armory-stat-dual-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: #070709;
+  display: flex;
+  overflow: hidden;
+}
+
+.armory-stat-base-fill {
+  background: var(--outline, #ac8884);
+  height: 100%;
+}
+
+.armory-stat-bonus-fill {
+  background: var(--crimson-vivid, #dc2626);
+  height: 100%;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.7);
+}
+
+/* ==========================================================================
+   TAB 2: INVENTORY VAULT
+   ========================================================================== */
+
+.armory-inventory-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.armory-inventory-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.armory-filter-pill {
+  padding: 0.4rem 0.875rem;
+  border-radius: 6px;
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  color: var(--text-dim, #64748b);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.armory-filter-pill:hover {
+  background: var(--surface-container, #18161b);
+  color: #fff;
+}
+
+.armory-filter-pill--active {
+  background: var(--crimson-vivid, #dc2626);
+  border-color: #ffb4ab;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.45);
+}
+
+.armory-inventory-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .armory-inventory-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .armory-inventory-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.armory-item-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.125rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.armory-item-card:hover {
+  background: var(--surface-container, #18161b);
+  transform: translateY(-2px);
+}
+
+.armory-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.armory-item-rarity-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+.armory-item-qty {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold-light, #ffdcc3);
+  font-family: var(--font-mono, monospace);
+}
+
+.armory-item-name {
+  margin: 0.375rem 0 0.25rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.armory-item-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.78125rem;
+  color: var(--text-dim, #64748b);
+  line-height: 1.35;
+}
+
+.armory-item-bonuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.armory-item-bonus-pill {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+}
+
+.armory-item-action-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.armory-item-action-btn--equip {
+  background: var(--surface-highest, #2e2930);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.armory-item-action-btn--equip:hover {
+  background: var(--crimson-vivid, #dc2626);
+  border-color: var(--crimson-vivid, #dc2626);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+}
+
+.armory-item-action-btn--use {
+  background: var(--gold-foundation, #ad5d00);
+  border-color: var(--gold-amber, #f59e0b);
+  color: #fff;
+}
+
+.armory-item-action-btn--use:hover {
+  background: var(--gold-amber, #f59e0b);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+
+.armory-item-equipped-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #10b981;
+  padding: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================================
+   TAB 3: LOADOUTS (SAVED BUILDS 1 to 5)
+   ========================================================================== */
+
+.armory-loadouts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .armory-loadouts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .armory-loadouts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.armory-loadout-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.armory-loadout-card--active {
+  border-color: var(--gold-amber, #f59e0b);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.armory-loadout-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.armory-loadout-slot-num {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--crimson-light, #ffb4ab);
+  letter-spacing: 0.08em;
+}
+
+.armory-loadout-active-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--crimson-vivid, #dc2626);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+.armory-loadout-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.armory-loadout-name {
+  margin: 0;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.armory-loadout-items-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.78125rem;
+  color: var(--text-dim, #64748b);
+  background: rgba(7, 7, 9, 0.4);
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+}
+
+.armory-loadout-items-summary strong {
+  color: var(--gold-light, #ffdcc3);
+}
+
+.armory-loadout-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.armory-loadout-equip-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: var(--surface-highest, #2e2930);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.armory-loadout-equip-btn:hover:not(:disabled) {
+  background: var(--crimson-vivid, #dc2626);
+  border-color: var(--crimson-vivid, #dc2626);
+}
+
+.armory-loadout-equip-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.armory-loadout-overwrite-btn {
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: var(--crimson-light, #ffb4ab);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.armory-loadout-overwrite-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+/* ==========================================================================
+   TAB 4: HUNTER TITLES
+   ========================================================================== */
+
+.armory-titles-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .armory-titles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .armory-titles-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+.armory-title-card {
+  background: var(--surface-low, #131116);
+  border: 1px solid rgba(67, 50, 53, 0.5);
+  border-radius: var(--radius-xl, 12px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+.armory-title-card--equipped {
+  border-color: var(--gold-amber, #f59e0b) !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25) !important;
+}
+
+.armory-title-card--locked {
+  opacity: 0.65;
+}
+
+.armory-title-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.armory-title-name {
+  margin: 0.375rem 0 0.25rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.armory-title-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #c9b6b6);
+  line-height: 1.4;
+}
+
+.armory-title-condition {
+  font-size: 0.72rem;
+  color: var(--text-dim, #64748b);
+  background: rgba(7, 7, 9, 0.5);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 2px solid;
+}
+
+.armory-title-equip-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background: var(--surface-highest, #2e2930);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.armory-title-equip-btn:hover:not(:disabled) {
+  background: var(--crimson-vivid, #dc2626);
+  border-color: var(--crimson-vivid, #dc2626);
+}
+
+.armory-title-equip-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+

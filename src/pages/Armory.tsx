@@ -4,15 +4,19 @@ import {
   Shield,
   Sparkles,
   Package,
-  Award,
   Crown,
   Check,
   Lock,
-  Zap,
   Save,
   Info,
   Layers,
   ArrowRightLeft,
+  Swords,
+  Cpu,
+  ChevronDown,
+  ChevronUp,
+  Pencil,
+  X,
 } from "lucide-react";
 import type { Player, StatName } from "../types/game";
 import {
@@ -44,6 +48,10 @@ import {
   type PlayerLoadout,
   MAX_LOADOUTS,
 } from "../lib/loadoutsData";
+import { AVATAR_PRESETS } from "../data/avatars";
+import { getRankDefinition } from "../data/ranks";
+import Avatar from "../components/Avatar";
+import "./Armory.css";
 
 interface ArmoryProps {
   userId: string;
@@ -78,6 +86,14 @@ export default function Armory({
   const [editingLoadoutSlot, setEditingLoadoutSlot] = useState<number | null>(null);
   const [loadoutNameInput, setLoadoutNameInput] = useState("");
 
+  const rankDef = getRankDefinition(player.progress.rank);
+
+  const currentPreset =
+    AVATAR_PRESETS.find((p) => p.id === player.profile?.avatarId) ??
+    AVATAR_PRESETS[0];
+
+  const displayedName = player.profile?.name || currentPreset.name;
+
   const effectiveStats = useMemo(() => {
     return calculateEffectiveStats(player.stats, equipment);
   }, [player.stats, equipment]);
@@ -103,10 +119,28 @@ export default function Armory({
   }, [userId]);
 
   useEffect(() => {
+    let isMounted = true;
     if (userId) {
-      void loadData();
+      Promise.all([
+        fetchPlayerInventory(userId),
+        fetchPlayerTitles(userId),
+        fetchPlayerLoadouts(userId),
+      ])
+        .then(([invData, titlesData, loadoutsData]) => {
+          if (isMounted) {
+            setInventory(invData);
+            setUnlockedTitleIds(titlesData);
+            setLoadouts(loadoutsData);
+          }
+        })
+        .catch((err) => {
+          console.warn("Failed to load armory data:", err);
+        });
     }
-  }, [userId, loadData]);
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   // Equip handler
   const handleEquipItem = async (itemId: string) => {
@@ -181,318 +215,381 @@ export default function Armory({
     return inventory.filter((item) => item.definition?.slot === slot);
   };
 
+  // Compute total active stat bonuses
+  const activeGearBonuses = useMemo(() => {
+    const bonuses: Partial<Record<StatName, number>> = {};
+    const items = [equipment.weapon, equipment.armor, equipment.accessory].filter(Boolean) as ItemDefinition[];
+    for (const item of items) {
+      if (item.statModifiers) {
+        for (const [stat, val] of Object.entries(item.statModifiers)) {
+          bonuses[stat as StatName] = (bonuses[stat as StatName] || 0) + val;
+        }
+      }
+    }
+    return bonuses;
+  }, [equipment]);
+
+  const activeSlotCount = [equipment.weaponItemId, equipment.armorItemId, equipment.accessoryItemId].filter(Boolean).length;
+
   return (
-    <main className="armory-hub-page">
-      <div className="system-header">
-        <h1>Armory & Deep RPG Systems</h1>
-        <div>
-          <h1>ARMORY</h1>
-          <p style={{ margin: "4px 0 0", color: "#8a6b70", fontSize: "0.88rem" }}>
-            Manage what you own, what you equip, and how your Hunter is built.
-          </p>
+    <main className="armory-root">
+      {/* ── HERO CHAMBER BANNER ── */}
+      <section className="armory-hero-banner">
+        <div className="armory-hero-top">
+          <div className="armory-hero-title-group">
+            <div className="armory-hero-tag">
+              <span className="armory-hero-tag-pulse" />
+              <span>SYSTEM PROTOCOL // ARMORY MATRIX</span>
+            </div>
+            <h1 className="armory-hero-title">HUNTER ARMORY</h1>
+            <p className="armory-hero-desc">
+              Manage tactical loadouts, calibrated equipment, vault storage, and hunter titles.
+            </p>
+          </div>
+
+          {/* Quick Hunter Identity Block */}
+          <div className="armory-identity-block">
+            <div className="armory-identity-avatar-box">
+              <Avatar
+                avatarId={player.profile?.avatarId}
+                level={player.progress.level}
+                rank={player.progress.rank}
+                size={48}
+                showRank={false}
+                showLevel={false}
+              />
+              <span className="armory-identity-rank-tag">{player.progress.rank}</span>
+            </div>
+
+            <div className="armory-identity-meta">
+              <div className="armory-identity-name-row">
+                <span className="armory-identity-name">{displayedName}</span>
+                <span className="armory-identity-badge">
+                  {equippedTitle ? equippedTitle.name : currentPreset.category.toUpperCase()}
+                </span>
+              </div>
+              <div className="armory-identity-telemetry">
+                <span>LVL <strong>{player.progress.level}</strong></span>
+                <span>/</span>
+                <span>PWR <strong style={{ color: "var(--crimson-light, #ffb4ab)" }}>{powerScore.toLocaleString()} CP</strong></span>
+                <span>/</span>
+                <span style={{ color: "var(--gold-highlight, #ffb77d)" }}>{player.progress.coins} COINS</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="inline-meta">
-          <span
-            className="value-badge"
-            style={{
-              borderColor: "#ffd700",
-              color: "#ffd700",
-              fontWeight: "bold",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <Zap size={14} />
-            POWER SCORE: {powerScore.toLocaleString()}
+
+        {/* Quick Reference Guide Bar */}
+        <div className="armory-quick-guide">
+          <span className="armory-quick-guide-item">
+            <strong style={{ color: "var(--cyan-tactical, #38bdf8)" }}>INVENTORY:</strong> What you own
           </span>
-          {equippedTitle && (
-            <span
-              className="value-badge"
-              style={{
-                borderColor: equippedTitle.badgeColor,
-                color: equippedTitle.badgeColor,
-              }}
-            >
-              <Award size={13} style={{ marginRight: 4 }} />
-              {equippedTitle.name}
-            </span>
-          )}
-          <Link
-            to="/stats"
-            className="value-badge"
-            style={{ textDecoration: "none", color: "#f2e9e9" }}
-          >
-            Profile ➔
-          </Link>
+          <span className="armory-quick-guide-sep">•</span>
+          <span className="armory-quick-guide-item">
+            <strong style={{ color: "#10b981" }}>EQUIPMENT:</strong> What you're currently using
+          </span>
+          <span className="armory-quick-guide-sep">•</span>
+          <span className="armory-quick-guide-item">
+            <strong style={{ color: "var(--gold-highlight, #ffb77d)" }}>LOADOUTS:</strong> Saved equipment builds
+          </span>
+          <span className="armory-quick-guide-sep">•</span>
+          <span className="armory-quick-guide-item">
+            <strong style={{ color: "var(--gold-amber, #f59e0b)" }}>TITLES:</strong> Unlocked identities
+          </span>
+          <span className="armory-quick-guide-sep">•</span>
+          <span className="armory-quick-guide-item">
+            <strong style={{ color: "var(--crimson-light, #ffb4ab)" }}>POWER SCORE:</strong> Real calculated rating
+          </span>
         </div>
-      </div>
+      </section>
 
-      {/* Quick Reference Guide Bar */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "8px 12px",
-          marginBottom: "16px",
-          padding: "8px 14px",
-          background: "rgba(0,0,0,0.35)",
-          borderRadius: "6px",
-          border: "1px solid rgba(138, 107, 112, 0.2)",
-        }}
-      >
-        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-          <strong style={{ color: "#38bdf8" }}>INVENTORY:</strong> What you own
-        </div>
-        <span style={{ color: "rgba(138, 107, 112, 0.4)" }}>•</span>
-        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-          <strong style={{ color: "#22c55e" }}>EQUIPMENT:</strong> What you're currently using
-        </div>
-        <span style={{ color: "rgba(138, 107, 112, 0.4)" }}>•</span>
-        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-          <strong style={{ color: "#a855f7" }}>LOADOUTS:</strong> Saved equipment builds
-        </div>
-        <span style={{ color: "rgba(138, 107, 112, 0.4)" }}>•</span>
-        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-          <strong style={{ color: "#ffd700" }}>TITLES:</strong> Achievements and identities you've unlocked
-        </div>
-        <span style={{ color: "rgba(138, 107, 112, 0.4)" }}>•</span>
-        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-          <strong style={{ color: "#ffaa00" }}>POWER SCORE:</strong> Calculated strength from your progression and gear
-        </div>
-      </div>
-
+      {/* ── FEEDBACK NOTIFICATION ── */}
       {statusMessage && (
         <div
-          className={`panel-box alert-box ${statusMessage.type === "error" ? "alert-error" : "alert-success"}`}
-          style={{
-            marginBottom: 16,
-            borderColor: statusMessage.type === "error" ? "#ef4444" : "#22c55e",
-            color: statusMessage.type === "error" ? "#fca5a5" : "#86efac",
-            background: "rgba(20, 9, 11, 0.95)",
-            padding: "10px 16px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
+          className={`armory-alert-box ${
+            statusMessage.type === "error" ? "armory-alert-box--error" : "armory-alert-box--success"
+          }`}
         >
           <Info size={16} />
           <span>{statusMessage.text}</span>
         </div>
       )}
 
-      {/* Tabs Navigation with Dual Labels */}
-      <div className="quest-filter-bar" style={{ marginBottom: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
+      {/* ── TABS NAVIGATION ── */}
+      <div className="armory-tab-bar">
         <button
-          className={`filter-tab ${activeTab === "equipment" ? "active" : ""}`}
+          type="button"
+          className={`armory-tab-btn ${activeTab === "equipment" ? "armory-tab-btn--active" : ""}`}
           onClick={() => setActiveTab("equipment")}
-          style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "8px 12px", width: "100%" }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "bold", fontSize: "0.85rem" }}>
-            <Shield size={14} /> EQUIPMENT
-          </span>
-          <span style={{ fontSize: "0.7rem", color: activeTab === "equipment" ? "#ffd700" : "#8a6b70", fontWeight: "normal" }}>
-            Current gear
-          </span>
+          <div className="armory-tab-label">
+            <Shield size={16} />
+            <span>EQUIPMENT</span>
+          </div>
+          <span className="armory-tab-sub">Current Gear ({activeSlotCount}/3)</span>
         </button>
+
         <button
-          className={`filter-tab ${activeTab === "inventory" ? "active" : ""}`}
+          type="button"
+          className={`armory-tab-btn ${activeTab === "inventory" ? "armory-tab-btn--active" : ""}`}
           onClick={() => setActiveTab("inventory")}
-          style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "8px 12px", width: "100%" }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "bold", fontSize: "0.85rem" }}>
-            <Package size={14} /> INVENTORY ({inventory.length})
-          </span>
-          <span style={{ fontSize: "0.7rem", color: activeTab === "inventory" ? "#ffd700" : "#8a6b70", fontWeight: "normal" }}>
-            Owned items
-          </span>
+          <div className="armory-tab-label">
+            <Package size={16} />
+            <span>INVENTORY ({inventory.length})</span>
+          </div>
+          <span className="armory-tab-sub">Owned Items</span>
         </button>
+
         <button
-          className={`filter-tab ${activeTab === "loadouts" ? "active" : ""}`}
+          type="button"
+          className={`armory-tab-btn ${activeTab === "loadouts" ? "armory-tab-btn--active" : ""}`}
           onClick={() => setActiveTab("loadouts")}
-          style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "8px 12px", width: "100%" }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "bold", fontSize: "0.85rem" }}>
-            <Layers size={14} /> LOADOUTS (Max 5)
-          </span>
-          <span style={{ fontSize: "0.7rem", color: activeTab === "loadouts" ? "#ffd700" : "#8a6b70", fontWeight: "normal" }}>
-            Saved builds
-          </span>
+          <div className="armory-tab-label">
+            <Layers size={16} />
+            <span>LOADOUTS (Max 5)</span>
+          </div>
+          <span className="armory-tab-sub">Saved Builds</span>
         </button>
+
         <button
-          className={`filter-tab ${activeTab === "titles" ? "active" : ""}`}
+          type="button"
+          className={`armory-tab-btn ${activeTab === "titles" ? "armory-tab-btn--active" : ""}`}
           onClick={() => setActiveTab("titles")}
-          style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "8px 12px", width: "100%" }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "bold", fontSize: "0.85rem" }}>
-            <Crown size={14} /> TITLES ({unlockedTitleIds.length}/{TITLES_CATALOG.length})
-          </span>
-          <span style={{ fontSize: "0.7rem", color: activeTab === "titles" ? "#ffd700" : "#8a6b70", fontWeight: "normal" }}>
-            Unlocked identities
-          </span>
+          <div className="armory-tab-label">
+            <Crown size={16} />
+            <span>TITLES ({unlockedTitleIds.length}/{TITLES_CATALOG.length})</span>
+          </div>
+          <span className="armory-tab-sub">Unlocked Identities</span>
         </button>
       </div>
 
-      {/* ── TAB 1: EQUIPMENT (PAPER DOLL) ── */}
+      {/* ── TAB 1: EQUIPMENT CHAMBER ── */}
       {activeTab === "equipment" && (
-        <div className="armory-equipment-tab">
-          <div className="profile-hero-card" style={{ marginBottom: 20 }}>
-            <div className="profile-hero-details" style={{ width: "100%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: "1.2rem", color: "#f2e9e9", display: "flex", alignItems: "center", gap: 8 }}>
-                    <Sparkles size={18} color="#ffd700" /> Active Hunter Loadout
-                  </h2>
-                  <p style={{ margin: "4px 0 0", color: "#8a6b70", fontSize: "0.85rem" }}>
-                    Base stats + equipment bonuses = Effective combat stats. Base stats remain permanently uncorrupted.
-                  </p>
-                </div>
-                <div
-                  style={{
-                    background: "rgba(255, 215, 0, 0.1)",
-                    border: "1px solid #ffd700",
-                    padding: "10px 16px",
-                    borderRadius: 6,
-                    textAlign: "right",
-                    minWidth: "220px",
-                  }}
-                >
-                  <div style={{ fontSize: "0.7rem", color: "#c9a876", textTransform: "uppercase", letterSpacing: "0.05em" }}>Calculated Power Score</div>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#ffd700" }}>{powerScore.toLocaleString()}</div>
-                  <div style={{ fontSize: "0.7rem", color: "#8a6b70", margin: "2px 0 4px" }}>
-                    Calculated from your current progression, stats, rank and equipment.
-                  </div>
-                  <button
-                    onClick={() => setShowPowerFormula(!showPowerFormula)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: "#ffd700",
-                      fontSize: "0.72rem",
-                      cursor: "pointer",
-                      padding: 0,
-                      textDecoration: "underline",
-                    }}
-                  >
-                    {showPowerFormula ? "Hide calculation details ▲" : "How is this calculated? ▼"}
-                  </button>
-                  {showPowerFormula && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        padding: "8px 10px",
-                        background: "rgba(0,0,0,0.6)",
-                        borderRadius: 4,
-                        border: "1px solid rgba(255, 215, 0, 0.25)",
-                        fontSize: "0.7rem",
-                        color: "#f2e9e9",
-                        textAlign: "left",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      <div style={{ color: "#ffd700", fontWeight: "bold", marginBottom: 2 }}>Formula Breakdown:</div>
-                      <div>• Level: +100 per Level</div>
-                      <div>• Rank Tier: +500 per Tier (F=0 to LEGENDARY=4,500)</div>
-                      <div>• Effective Stats: +10 per Stat point</div>
-                      <div>• Completed Quests: +15 per Quest</div>
-                      <div>• Best Streak: +25 per Day</div>
-                      <div>• Boss Victories: +150 per Boss</div>
-                      <div>• Achievements: +50 per Unlocked</div>
-                    </div>
-                  )}
-                </div>
+        <div className="armory-equipment-layout">
+          {/* Active Gear Matrix Section */}
+          <div className="armory-section-card">
+            <div className="armory-section-header">
+              <div className="armory-section-title-group">
+                <Shield size={18} style={{ color: "var(--crimson-vivid, #dc2626)" }} />
+                <h2 className="armory-section-title">ACTIVE GEAR MATRIX</h2>
               </div>
+              <span className="armory-section-badge">
+                {activeSlotCount} / 3 SLOTS CONVERGED
+              </span>
+            </div>
 
-              {/* Effective Stats Row with Base + Bonus Breakdown */}
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: "0.75rem", color: "#8a6b70", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontWeight: "bold" }}>
-                  EFFECTIVE STATS BREAKDOWN (BASE + EQUIPMENT)
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
-                  {(["strength", "intelligence", "vitality", "focus", "discipline", "consistency"] as StatName[]).map((stat) => {
-                    const base = player.stats[stat] || 0;
-                    const eff = effectiveStats[stat] || 0;
-                    const bonus = eff - base;
-                    return (
-                      <div
-                        key={stat}
-                        className="stat-pill"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 3,
-                          padding: "8px 10px",
-                          background: "rgba(0,0,0,0.4)",
-                          border: "1px solid rgba(138, 107, 112, 0.25)",
-                        }}
-                      >
-                        <span className="card-title" style={{ fontSize: "0.7rem" }}>{stat.toUpperCase()}</span>
-                        <div style={{ fontSize: "0.75rem", color: "#8a6b70" }}>
-                          Base: <strong style={{ color: "#f2e9e9" }}>{base}</strong>
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: bonus > 0 ? "#22c55e" : "#8a6b70" }}>
-                          Bonus: <strong>{bonus > 0 ? `+${bonus}` : "0"}</strong>
-                        </div>
-                        <div style={{ fontSize: "0.88rem", fontWeight: "bold", color: "#ffd700", borderTop: "1px solid rgba(138, 107, 112, 0.25)", paddingTop: 3, marginTop: 1 }}>
-                          Effective: {eff}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{ margin: "8px 0 0", color: "#8a6b70", fontSize: "0.75rem", fontStyle: "italic" }}>
-                  Equipment bonuses apply exclusively while gear is equipped. Your core attributes remain permanent and never corrupt.
-                </div>
+            <div className="armory-gear-slots-list">
+              {/* Weapon Slot */}
+              <EquipmentSlotItem
+                slot="weapon"
+                slotLabel="WEAPON"
+                item={equipment.weapon}
+                onUnequip={() => handleUnequip("weapon")}
+                ownedEligible={getOwnedEligibleForSlot("weapon")}
+                onEquipItem={handleEquipItem}
+              />
+
+              {/* Armor Slot */}
+              <EquipmentSlotItem
+                slot="armor"
+                slotLabel="ARMOR"
+                item={equipment.armor}
+                onUnequip={() => handleUnequip("armor")}
+                ownedEligible={getOwnedEligibleForSlot("armor")}
+                onEquipItem={handleEquipItem}
+              />
+
+              {/* Accessory Slot */}
+              <EquipmentSlotItem
+                slot="accessory"
+                slotLabel="ACCESSORY"
+                item={equipment.accessory}
+                onUnequip={() => handleUnequip("accessory")}
+                ownedEligible={getOwnedEligibleForSlot("accessory")}
+                onEquipItem={handleEquipItem}
+              />
+            </div>
+
+            {/* Total Active Gear Attributes Banner */}
+            <div className="armory-total-boost-banner">
+              <span className="armory-total-boost-title">TOTAL ACTIVE GEAR ATTRIBUTES</span>
+              <div className="armory-total-boost-values">
+                {Object.keys(activeGearBonuses).length > 0
+                  ? Object.entries(activeGearBonuses)
+                      .map(([stat, val]) => `+${val} ${stat.toUpperCase().slice(0, 3)}`)
+                      .join(" • ")
+                  : "NO ACTIVE STAT BONUSES (EQUIP GEAR TO BOOST)"}
               </div>
             </div>
           </div>
 
-          {/* 3 Equipment Slots */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            {/* Slot: Weapon */}
-            <EquipmentSlotCard
-              slot="weapon"
-              title="Weapon Slot"
-              item={equipment.weapon}
-              onUnequip={() => handleUnequip("weapon")}
-              ownedEligible={getOwnedEligibleForSlot("weapon")}
-              onEquipItem={handleEquipItem}
-            />
+          {/* Companion Column: Power Score + Effective Stats */}
+          <div className="armory-stats-column">
+            {/* Power Score Combat Readiness Card */}
+            <div className="armory-power-score-card">
+              <div className="armory-power-top-row">
+                <span className="armory-section-badge">METRIC EVALUATION</span>
+                <span className="armory-identity-badge" style={{ borderColor: rankDef.color, color: rankDef.color }}>
+                  {rankDef.badgeLabel} CAP
+                </span>
+              </div>
 
-            {/* Slot: Armor */}
-            <EquipmentSlotCard
-              slot="armor"
-              title="Armor Slot"
-              item={equipment.armor}
-              onUnequip={() => handleUnequip("armor")}
-              ownedEligible={getOwnedEligibleForSlot("armor")}
-              onEquipItem={handleEquipItem}
-            />
+              <div className="armory-power-center">
+                <span style={{ fontSize: "0.72rem", color: "var(--crimson-light, #ffb4ab)", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
+                  HUNTER COMBAT POWER
+                </span>
+                <div className="armory-power-num-group">
+                  <span className="armory-power-number">{powerScore.toLocaleString()}</span>
+                  <span className="armory-power-unit">CP</span>
+                </div>
 
-            {/* Slot: Accessory */}
-            <EquipmentSlotCard
-              slot="accessory"
-              title="Accessory Slot"
-              item={equipment.accessory}
-              onUnequip={() => handleUnequip("accessory")}
-              ownedEligible={getOwnedEligibleForSlot("accessory")}
-              onEquipItem={handleEquipItem}
-            />
+                <div className="armory-power-track">
+                  <div
+                    className="armory-power-fill"
+                    style={{
+                      width: `${Math.min(100, Math.max(15, Math.round((powerScore % 5000) / 50)))}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="armory-power-progress-sub">
+                  <span>RANK TIER: {rankDef.badgeLabel}</span>
+                  <Link to="/ranks" style={{ color: "var(--gold-highlight, #ffb77d)", textDecoration: "none" }}>
+                    ROADMAP ➔
+                  </Link>
+                </div>
+              </div>
+
+              {/* Accordion Calculation Breakdown */}
+              <div className="armory-formula-accordion">
+                <button
+                  type="button"
+                  className="armory-formula-toggle"
+                  onClick={() => setShowPowerFormula(!showPowerFormula)}
+                >
+                  <span>[ HOW IS THIS CALCULATED? ]</span>
+                  {showPowerFormula ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+
+                {showPowerFormula && (
+                  <div className="armory-formula-rows">
+                    <div className="armory-formula-row">
+                      <span>Level Base</span>
+                      <strong>+100 per Level</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Rank Tier Standing</span>
+                      <strong>+500 per Tier (F=0 to LEGENDARY=4,500)</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Effective Attributes</span>
+                      <strong>+10 per Stat point</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Completed Quests</span>
+                      <strong>+15 per Quest</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Best Streak</span>
+                      <strong>+25 per Day</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Boss Victories</span>
+                      <strong>+150 per Boss</strong>
+                    </div>
+                    <div className="armory-formula-row">
+                      <span>Achievements</span>
+                      <strong>+50 per Unlocked</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Effective Attributes Card (Base + Equipment = Effective) */}
+            <div className="armory-effective-stats-card">
+              <div className="armory-section-header">
+                <div className="armory-section-title-group">
+                  <Sparkles size={18} style={{ color: "var(--gold-amber, #f59e0b)" }} />
+                  <h3 className="armory-section-title">EFFECTIVE ATTRIBUTES</h3>
+                </div>
+              </div>
+
+              <div className="armory-formula-banner">
+                <span>[ BASE ]</span>
+                <span style={{ color: "var(--crimson-vivid, #dc2626)", fontWeight: 700 }}>+</span>
+                <span style={{ color: "var(--crimson-light, #ffb4ab)" }}>[ EQUIPMENT ]</span>
+                <span style={{ fontWeight: 700 }}>=</span>
+                <span style={{ color: "var(--gold-highlight, #ffb77d)", fontWeight: 700 }}>[ EFFECTIVE ]</span>
+              </div>
+
+              <div className="armory-stat-breakdown-list">
+                {(
+                  [
+                    { stat: "strength", label: "STRENGTH", sub: "Physical / Movement" },
+                    { stat: "intelligence", label: "INTELLIGENCE", sub: "Reading / Studies" },
+                    { stat: "vitality", label: "VITALITY", sub: "Hydration / Sleep" },
+                    { stat: "focus", label: "FOCUS", sub: "Deep Work Sprints" },
+                    { stat: "discipline", label: "DISCIPLINE", sub: "Daily Directives" },
+                    { stat: "consistency", label: "CONSISTENCY", sub: "Streak Retention" },
+                  ] as { stat: StatName; label: string; sub: string }[]
+                ).map(({ stat, label, sub }) => {
+                  const base = player.stats[stat] || 0;
+                  const eff = effectiveStats[stat] || 0;
+                  const bonus = eff - base;
+                  const maxDisplayStat = Math.max(30, eff + 5);
+                  const basePct = Math.min(100, Math.round((base / maxDisplayStat) * 100));
+                  const bonusPct = Math.min(100 - basePct, Math.round((bonus / maxDisplayStat) * 100));
+
+                  return (
+                    <div key={stat} className="armory-stat-breakdown-item">
+                      <div className="armory-stat-breakdown-row">
+                        <div className="armory-stat-breakdown-name-group">
+                          <span className="armory-stat-breakdown-name">{label}</span>
+                          <span className="armory-stat-breakdown-sub">({sub})</span>
+                        </div>
+                        <div className="armory-stat-breakdown-math">
+                          <span>{base}</span>
+                          {bonus > 0 && (
+                            <span style={{ color: "var(--crimson-light, #ffb4ab)", fontWeight: 700 }}>
+                              + {bonus}
+                            </span>
+                          )}
+                          <span>=</span>
+                          <strong style={{ color: bonus > 0 ? "var(--gold-highlight, #ffb77d)" : "#fff" }}>
+                            {eff}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div className="armory-stat-dual-track">
+                        <div className="armory-stat-base-fill" style={{ width: `${basePct}%` }} />
+                        {bonus > 0 && (
+                          <div className="armory-stat-bonus-fill" style={{ width: `${bonusPct}%` }} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── TAB 2: INVENTORY ── */}
+      {/* ── TAB 2: INVENTORY VAULT ── */}
       {activeTab === "inventory" && (
-        <div className="armory-inventory-tab">
+        <div className="armory-inventory-container">
           {/* Filter Pills */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          <div className="armory-inventory-filter-bar">
             {(["all", "equipment", "consumable", "special"] as (ItemCategory | "all")[]).map((cat) => (
               <button
                 key={cat}
-                className={`filter-tab ${selectedCategory === cat ? "active" : ""}`}
-                style={{ padding: "6px 14px", fontSize: "0.8rem" }}
+                type="button"
+                className={`armory-filter-pill ${selectedCategory === cat ? "armory-filter-pill--active" : ""}`}
                 onClick={() => setSelectedCategory(cat)}
               >
                 {cat.toUpperCase()}
@@ -501,18 +598,18 @@ export default function Armory({
           </div>
 
           {filteredInventory.length === 0 ? (
-            <div className="panel-box" style={{ textAlign: "center", padding: "40px 20px" }}>
-              <Package size={36} color="#8a6b70" style={{ margin: "0 auto 12px" }} />
-              <p style={{ color: "#f2e9e9", margin: "0 0 6px" }}>No items found in this category.</p>
-              <p style={{ color: "#8a6b70", fontSize: "0.85rem", margin: 0 }}>
-                Defeat raid bosses or purchase supplies at the Soul Merchant Bazaar to accumulate gear!
+            <div className="armory-section-card" style={{ textAlign: "center", padding: "3rem 1.5rem" }}>
+              <Package size={40} color="var(--text-dim, #64748b)" style={{ margin: "0 auto 0.75rem" }} />
+              <p style={{ color: "#fff", margin: "0 0 0.5rem", fontWeight: 700 }}>No items in this category.</p>
+              <p style={{ color: "var(--text-dim, #64748b)", fontSize: "0.85rem", margin: "0 auto 1.25rem", maxWidth: 440 }}>
+                Defeat raid bosses or visit the Soul Merchant Bazaar to accumulate weapons, armor, and tactical supplies.
               </p>
-              <Link to="/shop" className="action-btn" style={{ marginTop: 16, display: "inline-block", textDecoration: "none" }}>
+              <Link to="/shop" className="armory-filter-pill armory-filter-pill--active" style={{ textDecoration: "none", alignSelf: "center" }}>
                 Visit Shop
               </Link>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            <div className="armory-inventory-grid">
               {filteredInventory.map((item) => {
                 const def = item.definition;
                 if (!def) return null;
@@ -525,53 +622,29 @@ export default function Armory({
                 return (
                   <div
                     key={item.id}
-                    className="panel-box"
+                    className="armory-item-card"
                     style={{
-                      borderColor: isEquipped ? "#22c55e" : rarityColor,
-                      position: "relative",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
+                      borderColor: isEquipped ? "#10b981" : rarityColor,
                     }}
                   >
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div className="armory-item-top">
                         <span
-                          style={{
-                            fontSize: "0.7rem",
-                            textTransform: "uppercase",
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                            border: `1px solid ${rarityColor}`,
-                            color: rarityColor,
-                          }}
+                          className="armory-item-rarity-badge"
+                          style={{ borderColor: rarityColor, color: rarityColor }}
                         >
                           {def.rarity} • {def.category}
                         </span>
-                        <span style={{ fontSize: "0.75rem", color: "#c9a876", fontWeight: "bold" }}>
-                          x{item.quantity}
-                        </span>
+                        <span className="armory-item-qty">×{item.quantity}</span>
                       </div>
 
-                      <h3 style={{ margin: "6px 0", fontSize: "0.95rem", color: "#f2e9e9" }}>{def.name}</h3>
-                      <p style={{ margin: "0 0 10px", fontSize: "0.8rem", color: "#8a6b70", lineHeight: 1.3 }}>
-                        {def.description}
-                      </p>
+                      <h3 className="armory-item-name">{def.name}</h3>
+                      <p className="armory-item-desc">{def.description}</p>
 
                       {def.statModifiers && (
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                        <div className="armory-item-bonuses">
                           {Object.entries(def.statModifiers).map(([stat, bonus]) => (
-                            <span
-                              key={stat}
-                              style={{
-                                fontSize: "0.7rem",
-                                background: "rgba(34, 197, 94, 0.15)",
-                                border: "1px solid #22c55e",
-                                color: "#86efac",
-                                padding: "2px 6px",
-                                borderRadius: 4,
-                              }}
-                            >
+                            <span key={stat} className="armory-item-bonus-pill">
                               +{bonus} {stat.toUpperCase().slice(0, 3)}
                             </span>
                           ))}
@@ -579,26 +652,16 @@ export default function Armory({
                       )}
                     </div>
 
-                    <div style={{ marginTop: 10 }}>
+                    <div>
                       {def.slot ? (
                         isEquipped ? (
-                          <div
-                            style={{
-                              fontSize: "0.75rem",
-                              color: "#22c55e",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
-                              justifyContent: "center",
-                              padding: "6px",
-                            }}
-                          >
-                            <Check size={14} /> Equipped in {def.slot.toUpperCase()}
+                          <div className="armory-item-equipped-status">
+                            <Check size={16} /> Equipped in {def.slot.toUpperCase()}
                           </div>
                         ) : (
                           <button
-                            className="action-btn"
-                            style={{ width: "100%", fontSize: "0.8rem", padding: "6px 12px" }}
+                            type="button"
+                            className="armory-item-action-btn armory-item-action-btn--equip"
                             onClick={() => handleEquipItem(def.id)}
                           >
                             Equip as {def.slot.toUpperCase()}
@@ -606,14 +669,14 @@ export default function Armory({
                         )
                       ) : def.category === "consumable" ? (
                         <button
-                          className="action-btn"
-                          style={{ width: "100%", fontSize: "0.8rem", padding: "6px 12px" }}
+                          type="button"
+                          className="armory-item-action-btn armory-item-action-btn--use"
                           onClick={() => showFeedback(`Used ${def.name}! Vitality restored.`)}
                         >
                           Use Consumable
                         </button>
                       ) : (
-                        <div style={{ fontSize: "0.75rem", color: "#8a6b70", textAlign: "center" }}>
+                        <div style={{ fontSize: "0.75rem", color: "var(--text-dim, #64748b)", textAlign: "center", padding: "0.35rem" }}>
                           Special Quest Trophy
                         </div>
                       )}
@@ -626,23 +689,23 @@ export default function Armory({
         </div>
       )}
 
-      {/* ── TAB 3: LOADOUTS (MAX 5) ── */}
+      {/* ── TAB 3: LOADOUTS (SAVED BUILDS 1 TO 5) ── */}
       {activeTab === "loadouts" && (
-        <div className="armory-loadouts-tab">
-          <div className="panel-box" style={{ marginBottom: 20 }}>
-            <div className="panel-topbar">
-              <div className="card-title">Tactical Loadout Presets (1 to 5)</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div className="armory-section-card">
+            <div className="armory-section-header">
+              <div className="armory-section-title-group">
+                <Layers size={18} style={{ color: "var(--gold-highlight, #ffb77d)" }} />
+                <h2 className="armory-section-title">TACTICAL LOADOUT PRESETS (1 TO 5)</h2>
+              </div>
+              <span className="armory-section-badge">MAX {MAX_LOADOUTS} PRESETS</span>
             </div>
-            <p style={{ margin: "6px 0 0", color: "#f2e9e9", fontSize: "0.88rem", fontWeight: "500" }}>
-              Equipping a loadout replaces your current equipment with this saved setup.
-            </p>
-            <p style={{ margin: "4px 0 0", color: "#8a6b70", fontSize: "0.8rem" }}>
-              Configure up to 5 custom equipment presets for different training regimes (e.g. Strength grinding vs Focus study sessions).
-              Loadout activation validates complete item ownership before applying changes atomically.
+            <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--text-secondary, #c9b6b6)", lineHeight: 1.45 }}>
+              Equipping a loadout preset replaces your currently equipped gear with your saved configuration. Item ownership is validated atomically.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+          <div className="armory-loadouts-grid">
             {Array.from({ length: MAX_LOADOUTS }, (_, i) => i + 1).map((slotNum) => {
               const loadout = loadouts.find((l) => l.slotNumber === slotNum);
               const isActive =
@@ -656,92 +719,88 @@ export default function Armory({
               return (
                 <div
                   key={slotNum}
-                  className="panel-box"
-                  style={{
-                    borderColor: isActive ? "#ffd700" : "#631826",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
+                  className={`armory-loadout-card ${isActive ? "armory-loadout-card--active" : ""}`}
                 >
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: "bold",
-                          color: isActive ? "#ffd700" : "#8a6b70",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Slot {slotNum} {isActive ? "• [ACTIVE LOADOUT]" : ""}
-                      </span>
+                    <div className="armory-loadout-top">
+                      <span className="armory-loadout-slot-num">SLOT #{slotNum.toString().padStart(2, "0")}</span>
+                      {isActive && <span className="armory-loadout-active-badge">ACTIVE</span>}
                     </div>
 
-                    {isEditing ? (
-                      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                        <input
-                          type="text"
-                          value={loadoutNameInput}
-                          onChange={(e) => setLoadoutNameInput(e.target.value)}
-                          placeholder="Preset name..."
-                          style={{
-                            background: "#14090b",
-                            border: "1px solid #631826",
-                            color: "#f2e9e9",
-                            padding: "4px 8px",
-                            borderRadius: 4,
-                            fontSize: "0.85rem",
-                            flex: 1,
-                          }}
-                        />
-                        <button
-                          className="action-btn"
-                          style={{ padding: "4px 10px", fontSize: "0.8rem" }}
-                          onClick={() => handleSaveCurrentLoadout(slotNum, loadoutNameInput.trim())}
-                        >
-                          Save
-                        </button>
-                        <button
-                          className="action-btn"
-                          style={{ padding: "4px 8px", fontSize: "0.8rem", background: "transparent" }}
-                          onClick={() => setEditingLoadoutSlot(null)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <h3 style={{ margin: "0 0 12px", fontSize: "1rem", color: "#f2e9e9" }}>
-                        {loadout?.name || `Loadout Preset ${slotNum}`}
-                      </h3>
-                    )}
+                    <div className="armory-loadout-name-row">
+                      {isEditing ? (
+                        <div style={{ display: "flex", gap: "0.375rem", width: "100%" }}>
+                          <input
+                            type="text"
+                            value={loadoutNameInput}
+                            onChange={(e) => setLoadoutNameInput(e.target.value)}
+                            placeholder="Preset name..."
+                            style={{
+                              background: "#070709",
+                              border: "1px solid var(--crimson-vivid, #dc2626)",
+                              borderRadius: "4px",
+                              color: "#fff",
+                              padding: "0.25rem 0.5rem",
+                              fontSize: "0.85rem",
+                              flex: 1,
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="armory-filter-pill armory-filter-pill--active"
+                            style={{ padding: "0.25rem 0.5rem" }}
+                            onClick={() => handleSaveCurrentLoadout(slotNum, loadoutNameInput.trim())}
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="armory-filter-pill"
+                            style={{ padding: "0.25rem 0.5rem" }}
+                            onClick={() => setEditingLoadoutSlot(null)}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="armory-loadout-name">{loadout?.name || `Loadout Preset ${slotNum}`}</h3>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingLoadoutSlot(slotNum);
+                              setLoadoutNameInput(loadout?.name || `Preset ${slotNum}`);
+                            }}
+                            title="Rename Preset"
+                            style={{ background: "transparent", border: "none", color: "var(--text-dim, #64748b)", cursor: "pointer" }}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
 
-                    <div style={{ fontSize: "0.8rem", color: "#8a6b70", display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div className="armory-loadout-items-summary">
                       <div>
-                        <strong style={{ color: "#c9a876" }}>Weapon: </strong>
+                        <strong>Weapon: </strong>
                         {loadout?.weapon ? loadout.weapon.name : loadout?.weaponItemId ? loadout.weaponItemId : "Empty"}
                       </div>
                       <div>
-                        <strong style={{ color: "#c9a876" }}>Armor: </strong>
+                        <strong>Armor: </strong>
                         {loadout?.armor ? loadout.armor.name : loadout?.armorItemId ? loadout.armorItemId : "Empty"}
                       </div>
                       <div>
-                        <strong style={{ color: "#c9a876" }}>Accessory: </strong>
+                        <strong>Accessory: </strong>
                         {loadout?.accessory ? loadout.accessory.name : loadout?.accessoryItemId ? loadout.accessoryItemId : "Empty"}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+                  <div className="armory-loadout-actions">
                     {loadout ? (
                       <button
-                        className="action-btn"
-                        style={{
-                          flex: 1,
-                          fontSize: "0.8rem",
-                          padding: "6px",
-                          borderColor: isActive ? "#ffd700" : undefined,
-                        }}
+                        type="button"
+                        className="armory-loadout-equip-btn"
                         disabled={isActive}
                         onClick={() => handleEquipLoadoutPreset(slotNum)}
                       >
@@ -749,31 +808,28 @@ export default function Armory({
                       </button>
                     ) : (
                       <button
-                        className="action-btn"
-                        style={{ flex: 1, fontSize: "0.8rem", padding: "6px" }}
+                        type="button"
+                        className="armory-loadout-equip-btn"
+                        style={{ background: "var(--surface-container, #18161b)" }}
                         onClick={() => {
                           setLoadoutNameInput(`Preset ${slotNum}`);
                           void handleSaveCurrentLoadout(slotNum, `Preset ${slotNum}`);
                         }}
                       >
-                        <Save size={13} style={{ marginRight: 4 }} /> Save Gear Here
+                        <Save size={13} style={{ marginRight: 4 }} /> Save Current Gear
                       </button>
                     )}
 
                     <button
-                      className="action-btn"
-                      style={{
-                        padding: "6px 10px",
-                        fontSize: "0.8rem",
-                        background: "rgba(230, 57, 70, 0.1)",
-                      }}
-                      title="Overwrite with current equipment"
+                      type="button"
+                      className="armory-loadout-overwrite-btn"
+                      title="Overwrite with currently equipped items"
                       onClick={() => {
                         setEditingLoadoutSlot(slotNum);
                         setLoadoutNameInput(loadout?.name || `Preset ${slotNum}`);
                       }}
                     >
-                      <ArrowRightLeft size={13} />
+                      <ArrowRightLeft size={14} />
                     </button>
                   </div>
                 </div>
@@ -783,31 +839,25 @@ export default function Armory({
         </div>
       )}
 
-      {/* ── TAB 4: TITLES ── */}
+      {/* ── TAB 4: HUNTER TITLES ── */}
       {activeTab === "titles" && (
-        <div className="armory-titles-tab">
-          <div className="panel-box" style={{ marginBottom: 20 }}>
-            <div className="panel-topbar">
-              <div className="card-title">Hunter Prestige Titles</div>
-              <div className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Crown size={16} color="#ffd700" />
-                <span>UNLOCKED TITLES: {unlockedTitleIds.length} / {TITLES_CATALOG.length}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div className="armory-section-card">
+            <div className="armory-section-header">
+              <div className="armory-section-title-group">
+                <Crown size={18} style={{ color: "var(--gold-amber, #f59e0b)" }} />
+                <h2 className="armory-section-title">HUNTER PRESTIGE TITLES</h2>
               </div>
-              {equippedTitle && (
-                <span style={{ fontSize: "0.8rem", color: equippedTitle.badgeColor, fontWeight: "bold" }}>
-                  Equipped: [{equippedTitle.name}]
-                </span>
-              )}
+              <span className="armory-section-badge">
+                UNLOCKED: {unlockedTitleIds.length} / {TITLES_CATALOG.length}
+              </span>
             </div>
-            <p style={{ margin: "6px 0 0", color: "#f2e9e9", fontSize: "0.88rem", fontWeight: "500" }}>
-              Titles are earned through progression milestones and can be displayed as your Hunter identity.
-            </p>
-            <p style={{ margin: "4px 0 0", color: "#8a6b70", fontSize: "0.8rem" }}>
-              Equipping a title broadcasts your sovereign status across your Hunter profile, Armory, and System AI interface.
+            <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--text-secondary, #c9b6b6)", lineHeight: 1.45 }}>
+              Prestige titles are unlocked through milestone accomplishments. Only one title may be equipped at a time, broadcasting your identity across your Hunter dossier.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
+          <div className="armory-titles-grid">
             {TITLES_CATALOG.map((title) => {
               const isUnlocked = unlockedTitleIds.includes(title.id);
               const isEquipped = equippedTitle?.id === title.id;
@@ -815,74 +865,59 @@ export default function Armory({
               return (
                 <div
                   key={title.id}
-                  className="panel-box"
+                  className={`armory-title-card ${isEquipped ? "armory-title-card--equipped" : ""} ${
+                    !isUnlocked ? "armory-title-card--locked" : ""
+                  }`}
                   style={{
-                    borderColor: isEquipped ? title.badgeColor : isUnlocked ? "#3f1a20" : "rgba(99, 24, 38, 0.3)",
-                    boxShadow: isEquipped ? `0 0 12px ${title.glowColor}` : undefined,
-                    opacity: isUnlocked ? 1 : 0.65,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
+                    borderColor: isEquipped ? title.badgeColor : undefined,
                   }}
                 >
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div className="armory-title-top">
                       <span
+                        className="armory-item-rarity-badge"
                         style={{
-                          fontSize: "0.7rem",
-                          textTransform: "uppercase",
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                          border: `1px solid ${title.badgeColor}`,
+                          borderColor: title.badgeColor,
                           color: title.badgeColor,
                         }}
                       >
                         {title.rarity}
                       </span>
                       {isEquipped ? (
-                        <span style={{ fontSize: "0.75rem", color: title.badgeColor, fontWeight: "bold" }}>
+                        <span style={{ fontSize: "0.72rem", color: title.badgeColor, fontWeight: 700 }}>
                           [EQUIPPED]
                         </span>
                       ) : isUnlocked ? (
-                        <span style={{ fontSize: "0.75rem", color: "#22c55e" }}>Unlocked</span>
+                        <span style={{ fontSize: "0.72rem", color: "#10b981", fontWeight: 700 }}>
+                          Unlocked
+                        </span>
                       ) : (
-                        <span style={{ fontSize: "0.75rem", color: "#8a6b70", display: "flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ fontSize: "0.72rem", color: "var(--text-dim, #64748b)", display: "flex", alignItems: "center", gap: 3 }}>
                           <Lock size={12} /> Locked
                         </span>
                       )}
                     </div>
 
-                    <h3 style={{ margin: "4px 0 6px", fontSize: "1.05rem", color: title.badgeColor }}>
+                    <h3 className="armory-title-name" style={{ color: title.badgeColor }}>
                       {title.name}
                     </h3>
-
-                    <p style={{ margin: "0 0 10px", fontSize: "0.85rem", color: "#f2e9e9", lineHeight: 1.35 }}>
-                      {title.description}
-                    </p>
+                    <p className="armory-title-desc">{title.description}</p>
 
                     <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "#8a6b70",
-                        background: "rgba(0,0,0,0.3)",
-                        padding: "6px 8px",
-                        borderRadius: 4,
-                        borderLeft: `2px solid ${title.badgeColor}`,
-                      }}
+                      className="armory-title-condition"
+                      style={{ borderLeftColor: title.badgeColor }}
                     >
-                      <strong style={{ color: "#c9a876" }}>Condition: </strong>
+                      <strong style={{ color: "var(--gold-light, #ffdcc3)" }}>Condition: </strong>
                       {title.unlockCondition}
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div>
                     {isUnlocked ? (
                       <button
-                        className="action-btn"
+                        type="button"
+                        className="armory-title-equip-btn"
                         style={{
-                          width: "100%",
-                          fontSize: "0.8rem",
-                          padding: "6px",
                           borderColor: isEquipped ? title.badgeColor : undefined,
                         }}
                         disabled={isEquipped}
@@ -893,13 +928,14 @@ export default function Armory({
                     ) : (
                       <div
                         style={{
-                          fontSize: "0.75rem",
-                          color: "#8a6b70",
+                          fontSize: "0.72rem",
+                          color: "var(--text-dim, #64748b)",
                           textAlign: "center",
-                          padding: "6px",
+                          padding: "0.5rem",
+                          fontStyle: "italic",
                         }}
                       >
-                        Locked — Complete condition to awaken
+                        Complete condition to awaken title
                       </div>
                     )}
                   </div>
@@ -913,17 +949,17 @@ export default function Armory({
   );
 }
 
-// ── HELPER SUBCOMPONENT FOR SLOTS ──
-function EquipmentSlotCard({
+// ── EQUIPMENT SLOT SUBCOMPONENT ──
+function EquipmentSlotItem({
   slot,
-  title,
+  slotLabel,
   item,
   onUnequip,
   ownedEligible,
   onEquipItem,
 }: {
   slot: EquipmentSlot;
-  title: string;
+  slotLabel: string;
   item?: ItemDefinition;
   onUnequip: () => void;
   ownedEligible: PlayerInventoryItem[];
@@ -932,173 +968,185 @@ function EquipmentSlotCard({
   const [isChanging, setIsChanging] = useState(false);
   const rarityColor = item ? RARITY_COLORS[item.rarity] : "#8a6b70";
 
+  const Icon = slot === "weapon" ? Swords : slot === "armor" ? Shield : Cpu;
+
   return (
     <div
-      className="panel-box"
+      className="armory-gear-slot-item"
       style={{
-        borderColor: item ? rarityColor : "#631826",
-        background: "rgba(20, 9, 11, 0.9)",
+        borderColor: item ? rarityColor : "rgba(67, 50, 53, 0.4)",
       }}
     >
-      <div className="panel-topbar" style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div className="card-title">{title}</div>
-          {item ? (
-            <span
-              style={{
-                fontSize: "0.68rem",
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: "rgba(34, 197, 94, 0.15)",
-                border: "1px solid #22c55e",
-                color: "#86efac",
-                fontWeight: "bold",
-                letterSpacing: "0.03em",
-              }}
-            >
-              Status: EQUIPPED
-            </span>
-          ) : (
-            <span
-              style={{
-                fontSize: "0.68rem",
-                padding: "2px 7px",
-                borderRadius: 4,
-                background: "rgba(138, 107, 112, 0.15)",
-                border: "1px solid rgba(138, 107, 112, 0.4)",
-                color: "#8a6b70",
-                letterSpacing: "0.03em",
-              }}
-            >
-              Status: NOT EQUIPPED
-            </span>
-          )}
-        </div>
-        {item && (
-          <button
-            onClick={onUnequip}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#ef4444",
-              fontSize: "0.75rem",
-              cursor: "pointer",
-            }}
-          >
-            Unequip
-          </button>
-        )}
-      </div>
-
       {item ? (
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <h3 style={{ margin: 0, fontSize: "1rem", color: rarityColor }}>{item.name}</h3>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
+        <>
+          <div className="armory-gear-slot-main">
+            <div className="armory-gear-slot-left">
+              <div
+                className="armory-gear-slot-icon-box"
                 style={{
-                  fontSize: "0.7rem",
-                  color: "#c9a876",
-                  background: "rgba(201, 168, 118, 0.12)",
-                  border: "1px solid rgba(201, 168, 118, 0.3)",
-                  padding: "1px 6px",
-                  borderRadius: 4,
+                  borderColor: rarityColor,
+                  color: rarityColor,
+                  boxShadow: `inset 0 0 10px rgba(0, 0, 0, 0.5), 0 0 10px ${rarityColor}33`,
                 }}
               >
-                Inventory: Owned ×{ownedEligible.find((i) => i.definition?.id === item.id)?.quantity || 1}
+                <Icon size={22} />
+              </div>
+
+              <div className="armory-gear-slot-info">
+                <div className="armory-gear-slot-header">
+                  <span className="armory-gear-slot-category" style={{ color: rarityColor }}>
+                    {slotLabel}
+                  </span>
+                  <span
+                    className="armory-gear-slot-rarity-pill"
+                    style={{
+                      background: `${rarityColor}22`,
+                      color: rarityColor,
+                    }}
+                  >
+                    {item.rarity}
+                  </span>
+                </div>
+                <h3 className="armory-gear-slot-name">{item.name}</h3>
+                {item.statModifiers && (
+                  <div className="armory-gear-slot-bonuses" style={{ color: "var(--crimson-light, #ffb4ab)" }}>
+                    {Object.entries(item.statModifiers)
+                      .map(([s, val]) => `+${val} ${s.toUpperCase()}`)
+                      .join(" • ")}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="armory-gear-slot-right">
+              <span className="armory-gear-slot-qty">
+                OWNED ×{ownedEligible.find((i) => i.definition?.id === item.id)?.quantity || 1}
               </span>
-              <span style={{ fontSize: "0.7rem", color: rarityColor, textTransform: "uppercase" }}>{item.rarity}</span>
+              <span className="armory-gear-slot-equipped-tag">
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--crimson-vivid, #dc2626)",
+                    boxShadow: "0 0 6px var(--crimson-vivid, #dc2626)",
+                  }}
+                />
+                EQUIPPED
+              </span>
             </div>
           </div>
-          <p style={{ margin: "4px 0 10px", fontSize: "0.8rem", color: "#8a6b70", lineHeight: 1.3 }}>
-            {item.description}
-          </p>
-          {item.statModifiers && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-              {Object.entries(item.statModifiers).map(([s, val]) => (
-                <span
-                  key={s}
-                  style={{
-                    fontSize: "0.7rem",
-                    background: "rgba(34, 197, 94, 0.15)",
-                    border: "1px solid #22c55e",
-                    color: "#86efac",
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                  }}
-                >
-                  +{val} {s.toUpperCase().slice(0, 3)}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+
+          <p className="armory-gear-slot-desc">{item.description}</p>
+
+          <div className="armory-gear-slot-actions">
+            <button
+              type="button"
+              className="armory-gear-action-btn armory-gear-action-btn--change"
+              onClick={() => setIsChanging(!isChanging)}
+            >
+              {isChanging ? "Close Selector" : `Change ${slotLabel} (${ownedEligible.length} owned)`}
+            </button>
+            <button
+              type="button"
+              className="armory-gear-action-btn armory-gear-action-btn--unequip"
+              onClick={onUnequip}
+            >
+              Unequip
+            </button>
+          </div>
+        </>
       ) : (
-        <div style={{ padding: "20px 0", textAlign: "center", color: "#8a6b70", fontSize: "0.85rem" }}>
-          Empty Slot — No {slot} equipped
+        <div className="armory-gear-slot-empty">
+          <div
+            className="armory-gear-slot-icon-box"
+            style={{ opacity: 0.5, margin: "0 auto" }}
+          >
+            <Icon size={22} />
+          </div>
+          <span className="armory-gear-slot-empty-title">
+            Empty Slot — No {slotLabel} Equipped
+          </span>
+          <button
+            type="button"
+            className="armory-gear-action-btn armory-gear-action-btn--change"
+            onClick={() => setIsChanging(!isChanging)}
+          >
+            {isChanging ? "Close Selector" : `+ Equip ${slotLabel} (${ownedEligible.length} available)`}
+          </button>
         </div>
       )}
 
       {/* Eligible Items Dropdown / Selector */}
-      <div style={{ marginTop: 10, borderTop: "1px solid #3f1a20", paddingTop: 10 }}>
-        <button
-          className="action-btn"
-          style={{ width: "100%", fontSize: "0.75rem", padding: "5px 8px" }}
-          onClick={() => setIsChanging(!isChanging)}
+      {isChanging && (
+        <div
+          style={{
+            marginTop: "0.5rem",
+            paddingTop: "0.75rem",
+            borderTop: "1px solid rgba(67, 50, 53, 0.4)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
         >
-          {isChanging ? "Close Selector" : `Change ${slot.toUpperCase()} (${ownedEligible.length} owned)`}
-        </button>
+          {ownedEligible.length === 0 ? (
+            <p style={{ fontSize: "0.75rem", color: "var(--text-dim, #64748b)", margin: "0.25rem 0" }}>
+              No eligible {slot} items in inventory. Defeat bosses or visit the shop to obtain gear.
+            </p>
+          ) : (
+            ownedEligible.map((inv) => {
+              const def = inv.definition;
+              if (!def) return null;
+              const isCurrent = item?.id === def.id;
+              const rColor = RARITY_COLORS[def.rarity];
 
-        {isChanging && (
-          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-            {ownedEligible.length === 0 ? (
-              <p style={{ fontSize: "0.75rem", color: "#8a6b70", margin: 4 }}>
-                No alternative {slot} items in inventory.
-              </p>
-            ) : (
-              ownedEligible.map((inv) => {
-                const def = inv.definition;
-                if (!def) return null;
-                const isCurrent = item?.id === def.id;
-                return (
-                  <div
-                    key={inv.id}
+              return (
+                <div
+                  key={inv.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0.5rem 0.75rem",
+                    background: "rgba(7, 7, 9, 0.6)",
+                    borderRadius: "6px",
+                    border: `1px solid ${isCurrent ? "#10b981" : rColor}`,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "0.8125rem", color: "#fff", fontWeight: 700 }}>
+                      {def.name}
+                    </div>
+                    <div style={{ fontSize: "0.6875rem", color: "var(--text-dim, #64748b)", fontFamily: "var(--font-mono, monospace)" }}>
+                      {Object.entries(def.statModifiers || {})
+                        .map(([s, b]) => `+${b} ${s.slice(0, 3).toUpperCase()}`)
+                        .join(", ")}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="armory-filter-pill armory-filter-pill--active"
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "6px 8px",
-                      background: "rgba(0, 0, 0, 0.3)",
-                      borderRadius: 4,
-                      border: `1px solid ${RARITY_COLORS[def.rarity]}`,
+                      fontSize: "0.6875rem",
+                      padding: "0.3rem 0.6rem",
+                      opacity: isCurrent ? 0.6 : 1,
+                      cursor: isCurrent ? "default" : "pointer",
+                    }}
+                    disabled={isCurrent}
+                    onClick={() => {
+                      onEquipItem(def.id);
+                      setIsChanging(false);
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: "0.8rem", color: "#f2e9e9" }}>{def.name}</div>
-                      <div style={{ fontSize: "0.7rem", color: "#8a6b70" }}>
-                        {Object.entries(def.statModifiers || {})
-                          .map(([s, b]) => `+${b} ${s.slice(0, 3)}`)
-                          .join(", ")}
-                      </div>
-                    </div>
-                    <button
-                      className="action-btn"
-                      style={{ fontSize: "0.7rem", padding: "4px 8px" }}
-                      disabled={isCurrent}
-                      onClick={() => {
-                        onEquipItem(def.id);
-                        setIsChanging(false);
-                      }}
-                    >
-                      {isCurrent ? "Equipped" : "Equip"}
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
-      </div>
+                    {isCurrent ? "Equipped" : "Equip"}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
