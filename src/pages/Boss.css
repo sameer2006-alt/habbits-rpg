@@ -1,0 +1,1473 @@
+/**
+ * Boss Arena & Threat Matrix Scoped Stylesheet
+ * Strictly scoped to .boss-root to prevent any global CSS pollution.
+ * Visual Source of Truth: Stitch "Boss Arena: Complete Raid Hierarchy" & "Apex Raid Chamber"
+ */
+
+.boss-root {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  color: var(--text-primary, #e5e1e5);
+  font-family: var(--font-body, "Inter", sans-serif);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .boss-root {
+    padding: 2rem 1.5rem 4rem;
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .boss-root {
+    padding: 2.5rem 2rem 5rem;
+    gap: 2.25rem;
+  }
+}
+
+/* ==========================================================================
+   TOP THREAT PROTOCOL BAR & CADENCE NAVIGATION
+   ========================================================================== */
+
+.boss-protocol-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.boss-protocol-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .boss-protocol-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.boss-protocol-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.boss-protocol-radar-icon {
+  color: var(--accent-crimson, #dc2626);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boss-protocol-title {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  margin: 0;
+}
+
+.boss-protocol-threat-count {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(42, 42, 45, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ac8884;
+}
+
+.boss-telemetry-feed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(14, 14, 17, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-lg, 8px);
+  font-size: 0.75rem;
+}
+
+.boss-telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.boss-telemetry-divider {
+  width: 3px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .boss-telemetry-divider {
+    display: inline-block;
+  }
+}
+
+/* Segmented Cadence Toggle Tabs */
+.boss-cadence-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(14, 14, 17, 0.9);
+  padding: 0.35rem;
+  border-radius: var(--radius-xl, 12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 0.35rem;
+}
+
+@media (min-width: 640px) {
+  .boss-cadence-tabs {
+    display: inline-flex;
+    width: auto;
+  }
+}
+
+.boss-cadence-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-lg, 8px);
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a098a5;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.boss-cadence-tab:hover {
+  color: #eee9ee;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.boss-cadence-tab.active {
+  color: #fff;
+  background: #201f22;
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.25);
+}
+
+.boss-cadence-tab .tab-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent-crimson, #dc2626);
+  box-shadow: 0 0 8px #dc2626;
+}
+
+/* ==========================================================================
+   ROSTER MATRIX GRID (Boss Cards)
+   ========================================================================== */
+
+.boss-roster-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .boss-roster-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .boss-roster-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.boss-roster-card {
+  position: relative;
+  border-radius: var(--radius-xl, 12px);
+  background: rgba(32, 31, 34, 0.85);
+  border: 1px solid rgba(92, 64, 60, 0.35);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.boss-roster-card:hover {
+  background: rgba(42, 42, 45, 0.95);
+  border-color: rgba(220, 38, 38, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7), 0 0 16px rgba(220, 38, 38, 0.2);
+}
+
+.boss-roster-card.active {
+  background: rgba(32, 31, 34, 0.95);
+  border: 1.5px solid var(--accent-crimson, #dc2626);
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.35), 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.boss-roster-card.defeated {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.boss-roster-card-featured-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.2rem 0.55rem;
+  border-bottom-left-radius: var(--radius-sm, 4px);
+  background: var(--accent-crimson, #dc2626);
+  color: #fff;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.boss-roster-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.boss-roster-rank-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.boss-roster-card-title {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  margin: 0.2rem 0 0;
+  line-height: 1.2;
+}
+
+.boss-roster-card-subtitle {
+  font-size: 0.6875rem;
+  color: #a098a5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.boss-roster-card-hp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.boss-roster-hp-meta {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+
+.boss-roster-hp-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(14, 14, 17, 0.95);
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.boss-roster-hp-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.boss-roster-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.6875rem;
+  color: #a098a5;
+}
+
+/* ==========================================================================
+   FEATURED APEX RAID CHAMBER (Hero Visual & Health Command HUD)
+   ========================================================================== */
+
+.boss-hero-chamber {
+  position: relative;
+  border-radius: var(--radius-2xl, 16px);
+  background: #0e0e11;
+  border: 1px solid rgba(92, 64, 60, 0.4);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.9), 0 0 24px rgba(220, 38, 38, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Visual Atmospheric Backdrop */
+.boss-hero-backdrop {
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .boss-hero-backdrop {
+    min-height: 480px;
+    padding: 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .boss-hero-backdrop {
+    min-height: 520px;
+    padding: 2.5rem;
+  }
+}
+
+.boss-hero-art-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.boss-hero-ambient-glow {
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 65%;
+  height: 80%;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.boss-hero-emblem-container {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 320px;
+  height: 320px;
+  opacity: 0.18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .boss-hero-emblem-container {
+    right: 8%;
+    width: 440px;
+    height: 440px;
+    opacity: 0.25;
+  }
+}
+
+.boss-hero-emblem-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 40px var(--boss-glow, rgba(220, 38, 38, 0.5)));
+}
+
+.boss-hero-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(14, 14, 17, 0.4) 0%,
+    rgba(14, 14, 17, 0.85) 60%,
+    #1c1b1e 100%
+  );
+  z-index: 1;
+}
+
+.boss-hero-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, #0e0e11 95%);
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+/* Top Telemetry Row */
+.boss-hero-top-row {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.boss-hero-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(14, 14, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.boss-hero-badge-pill.rank {
+  color: var(--accent-crimson, #ffb4ab);
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.3);
+}
+
+.boss-hero-badge-pill.state {
+  color: #ac8884;
+}
+
+.boss-hero-badge-pill.entropy {
+  color: #ffb77d;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .boss-hero-badge-pill.entropy {
+    display: inline-flex;
+  }
+}
+
+/* Identity Lockup */
+.boss-hero-identity {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 3rem;
+}
+
+.boss-hero-protocol-tag {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: #ffdad6;
+}
+
+.boss-hero-name {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: #fff;
+  line-height: 1.05;
+  margin: 0;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.9);
+}
+
+.boss-hero-subtitle {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: clamp(0.95rem, 2.5vw, 1.35rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-crimson, #ef4444);
+  margin: 0;
+}
+
+.boss-hero-lore {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #e6bdb8;
+  font-style: italic;
+  max-width: 680px;
+  margin: 0.35rem 0 0;
+}
+
+/* Health Command HUD */
+.boss-hero-hud {
+  position: relative;
+  z-index: 10;
+  background: #1c1b1e;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@media (min-width: 768px) {
+  .boss-hero-hud {
+    padding: 1.75rem 2rem 2rem;
+  }
+}
+
+.boss-hud-metrics-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .boss-hud-metrics-row {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+}
+
+.boss-hud-integrity-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.boss-hud-integrity-label {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #ac8884;
+}
+
+.boss-hud-hp-current {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.boss-hud-hp-max {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #a098a5;
+}
+
+.boss-hud-status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.boss-hud-hp-percent {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-crimson, #ffb4ab);
+}
+
+.boss-hud-phase-tag {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(42, 42, 45, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ac8884;
+}
+
+/* Master Segmented Health Bar Track */
+.boss-master-hp-track {
+  position: relative;
+  width: 100%;
+  height: 26px;
+  background: #0e0e11;
+  border-radius: var(--radius-lg, 8px);
+  padding: 3px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.boss-master-hp-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #bf0715 0%, #dc2626 50%, #ff8b7d 100%);
+  box-shadow: 0 0 24px rgba(220, 38, 38, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.35rem;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 8px;
+}
+
+.boss-master-hp-fill.defeated {
+  background: linear-gradient(90deg, #15803d 0%, #22c55e 50%, #86efac 100%);
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.7);
+}
+
+.boss-hp-core-notch {
+  width: 4px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+/* Combat Sub-metrics & Action Controls */
+.boss-hud-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.35rem;
+}
+
+@media (min-width: 1024px) {
+  .boss-hud-action-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.boss-hud-telemetry-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.boss-hud-telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.boss-hud-telemetry-item .label {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ac8884;
+}
+
+.boss-hud-telemetry-item .val {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.boss-hud-rule-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(32, 31, 34, 0.9);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-lg, 8px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #eee9ee;
+}
+
+.boss-hud-rule-pill strong {
+  color: var(--accent-crimson, #ef4444);
+}
+
+.boss-hud-action-btn-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ==========================================================================
+   SECONDARY BENTO GRID (12 Columns)
+   ========================================================================== */
+
+.boss-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .boss-bento-grid {
+    grid-template-columns: 7fr 5fr;
+  }
+}
+
+/* Left & Right Column Stacks */
+.boss-col-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Generic Bento Card Panel */
+.boss-bento-panel {
+  background: #1c1b1e;
+  border-radius: var(--radius-2xl, 16px);
+  border: 1px solid rgba(92, 64, 60, 0.35);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.75);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .boss-bento-panel {
+    padding: 1.5rem;
+  }
+}
+
+.boss-bento-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.25rem;
+}
+
+.boss-bento-panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.boss-bento-panel-subtag {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ac8884;
+}
+
+/* 1. Tactical Phase Sequencer */
+.boss-phase-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.boss-phase-item {
+  position: relative;
+  border-radius: var(--radius-xl, 12px);
+  background: rgba(32, 31, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.boss-phase-item.active {
+  background: rgba(42, 42, 45, 0.95);
+  border-color: rgba(220, 38, 38, 0.5);
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.2);
+}
+
+.boss-phase-item.completed {
+  opacity: 0.75;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.boss-phase-item.locked {
+  opacity: 0.45;
+  background: rgba(20, 19, 22, 0.5);
+}
+
+.boss-phase-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.boss-phase-name {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+
+.boss-phase-status-badge {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.boss-phase-desc {
+  font-size: 0.8125rem;
+  color: #a098a5;
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.4;
+}
+
+/* 2. Hunter Combat Dossier */
+.boss-dossier-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .boss-dossier-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.boss-dossier-stat-tile {
+  background: #201f22;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg, 8px);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.boss-dossier-stat-label {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ac8884;
+}
+
+.boss-dossier-stat-val {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.boss-dossier-stat-desc {
+  font-size: 0.6875rem;
+  color: #a098a5;
+}
+
+/* Recent Combat Clears Log Feed */
+.boss-activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.boss-activity-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-lg, 8px);
+  background: rgba(14, 14, 17, 0.7);
+  font-size: 0.78125rem;
+  color: #e5e1e5;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.boss-activity-desc {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.boss-activity-dmg {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent-crimson, #ffb4ab);
+}
+
+/* 3. Victory Extraction Spoils (Rewards Box) */
+.boss-rewards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .boss-rewards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.boss-reward-tile {
+  background: #201f22;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg, 8px);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.boss-reward-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ac8884;
+}
+
+.boss-reward-tile-val {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.boss-reward-tile-desc {
+  font-size: 0.6875rem;
+  color: #a098a5;
+}
+
+/* Grand Trophy Chest Box */
+.boss-chronos-chest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  background: rgba(14, 14, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-xl, 12px);
+  padding: 0.85rem 1rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.boss-chronos-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg, 8px);
+  background: rgba(173, 93, 0, 0.25);
+  border: 1px solid rgba(255, 183, 125, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffb77d;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(217, 119, 6, 0.25);
+}
+
+.boss-chronos-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.boss-chronos-title {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+
+.boss-chronos-desc {
+  font-size: 0.6875rem;
+  color: #a098a5;
+  line-height: 1.35;
+}
+
+.boss-chronos-badge {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ac8884;
+  white-space: nowrap;
+}
+
+/* 4. Secondary Rotation Quick Switch Bay */
+.boss-rotation-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.boss-rotation-item {
+  background: #201f22;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg, 8px);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.boss-rotation-item:hover {
+  background: #2a2a2d;
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.boss-rotation-item.selected {
+  border-color: var(--accent-crimson, #dc2626);
+  background: rgba(42, 42, 45, 0.9);
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.2);
+}
+
+.boss-rotation-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.boss-rotation-item-name {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+/* Quick Directive Strike Feedback Toast */
+.boss-strike-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #201f22;
+  border: 1px solid rgba(220, 38, 38, 0.6);
+  border-radius: var(--radius-xl, 12px);
+  padding: 0.85rem 1.25rem;
+  box-shadow: 0 12px 32px rgba(220, 38, 38, 0.4), 0 8px 16px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  color: #fff;
+}
+
+.boss-strike-toast-icon {
+  color: var(--accent-crimson, #dc2626);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.boss-strike-toast-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.boss-strike-toast-title {
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.boss-strike-toast-desc {
+  font-size: 0.75rem;
+  color: var(--accent-crimson, #ffb4ab);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   BOSS IDENTITY & CREST PRESENTATION LAYER (Phase 5.5A)
+   ========================================================================== */
+
+/* Crest Base & Glow Variants */
+.boss-crest {
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+}
+
+.boss-crest--ignis {
+  --boss-accent-color: #ef4444;
+  --boss-accent-glow: rgba(239, 68, 68, 0.45);
+}
+
+.boss-crest--vortex {
+  --boss-accent-color: #dc2626;
+  --boss-accent-glow: rgba(220, 38, 38, 0.4);
+}
+
+.boss-crest--malakor {
+  --boss-accent-color: #ec4899;
+  --boss-accent-glow: rgba(236, 72, 153, 0.45);
+}
+
+.boss-crest--leviathan {
+  --boss-accent-color: #06b6d4;
+  --boss-accent-glow: rgba(6, 182, 212, 0.45);
+}
+
+.boss-roster-card:hover .boss-crest {
+  transform: scale(1.06);
+}
+
+/* Roster Card Crest Socket */
+.boss-roster-crest-socket {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg, 8px);
+  background: rgba(14, 14, 17, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+.boss-roster-card.active .boss-roster-crest-socket {
+  border-color: rgba(220, 38, 38, 0.6);
+  box-shadow: 0 0 14px var(--boss-accent-glow, rgba(220, 38, 38, 0.3));
+}
+
+.boss-roster-card-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Rotation Strip Crest Socket */
+.boss-rotation-crest-socket {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md, 6px);
+  background: rgba(14, 14, 17, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.boss-rotation-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Hero Chamber Identity Crest Lockup */
+.boss-hero-crest-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.boss-hero-crest-socket {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl, 12px);
+  background: rgba(14, 14, 17, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 20px var(--boss-glow, rgba(220, 38, 38, 0.3));
+}
+
+@media (min-width: 768px) {
+  .boss-hero-crest-socket {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* ==========================================================================
+   BOSS-SPECIFIC ATMOSPHERIC BACKGROUND EFFECTS
+   ========================================================================== */
+
+.boss-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* IGNIS ATMOSPHERE: Warm ember glow & heat haze */
+.boss-atmo-ignis-glow {
+  position: absolute;
+  top: -15%;
+  right: -5%;
+  width: 75%;
+  height: 90%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.28) 0%, rgba(249, 115, 22, 0.14) 45%, transparent 70%);
+  filter: blur(65px);
+  animation: ignisHeatPulse 6s ease-in-out infinite alternate;
+}
+
+.boss-atmo-ignis-sparks {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 40%, rgba(255, 120, 73, 0.12) 0%, transparent 60%);
+  filter: blur(40px);
+}
+
+@keyframes ignisHeatPulse {
+  0% {
+    transform: scale(0.92) translate(0, 0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.08) translate(-15px, 15px);
+    opacity: 1;
+  }
+}
+
+/* VORTEX ATMOSPHERE: Rotational distortion & cyclone halo */
+.boss-atmo-vortex-cyclone {
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 85%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.22) 0%, rgba(6, 182, 212, 0.1) 40%, transparent 70%);
+  filter: blur(75px);
+  animation: vortexSpinGlow 22s linear infinite;
+}
+
+.boss-atmo-vortex-ring {
+  position: absolute;
+  right: 5%;
+  top: 30%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  box-shadow: 0 0 45px rgba(6, 182, 212, 0.1);
+  transform: rotate(25deg);
+  opacity: 0.6;
+  animation: vortexRingDistort 10s ease-in-out infinite alternate;
+}
+
+@keyframes vortexSpinGlow {
+  0% {
+    transform: rotate(0deg) scale(0.95);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.95);
+  }
+}
+
+@keyframes vortexRingDistort {
+  0% {
+    transform: rotate(20deg) scale(0.96);
+  }
+  100% {
+    transform: rotate(35deg) scale(1.04);
+  }
+}
+
+/* MALAKOR ATMOSPHERE: Monumental dark sovereign burgundy & muted gold aura */
+.boss-atmo-malakor-aura {
+  position: absolute;
+  top: -20%;
+  right: -5%;
+  width: 80%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(127, 29, 29, 0.35) 0%, rgba(69, 10, 10, 0.25) 50%, transparent 75%);
+  filter: blur(80px);
+  animation: malakorAuraPulse 8s ease-in-out infinite alternate;
+}
+
+.boss-atmo-malakor-gold-pulse {
+  position: absolute;
+  right: 12%;
+  top: 35%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, transparent 70%);
+  filter: blur(50px);
+  animation: malakorGoldShiver 6s ease-in-out infinite alternate;
+}
+
+@keyframes malakorAuraPulse {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes malakorGoldShiver {
+  0% {
+    opacity: 0.5;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(-10px);
+  }
+}
+
+/* LEVIATHAN ATMOSPHERE: Deep trench miasma & tidal wave undulation */
+.boss-atmo-leviathan-trench {
+  position: absolute;
+  top: -15%;
+  right: -10%;
+  width: 85%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 23, 42, 0.5) 0%, rgba(153, 27, 27, 0.2) 45%, transparent 75%);
+  filter: blur(80px);
+  animation: leviathanTrenchPulse 9s ease-in-out infinite alternate;
+}
+
+.boss-atmo-leviathan-wave {
+  position: absolute;
+  right: 8%;
+  top: 40%;
+  width: 340px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.16) 0%, transparent 65%);
+  filter: blur(55px);
+  animation: leviathanWaveSwell 7s ease-in-out infinite alternate;
+}
+
+@keyframes leviathanTrenchPulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes leviathanWaveSwell {
+  0% {
+    transform: translateY(10px) scale(0.92);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-15px) scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+/* Environmental Transitions on Hero Chamber */
+.boss-hero-chamber.boss-theme--ignis {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.9), 0 0 28px rgba(239, 68, 68, 0.2);
+}
+
+.boss-hero-chamber.boss-theme--vortex {
+  border-color: rgba(220, 38, 38, 0.45);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.9), 0 0 28px rgba(220, 38, 38, 0.18), inset 0 0 18px rgba(6, 182, 212, 0.05);
+}
+
+.boss-hero-chamber.boss-theme--malakor {
+  border-color: rgba(127, 29, 29, 0.6);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.9), 0 0 32px rgba(220, 38, 38, 0.25);
+}
+
+.boss-hero-chamber.boss-theme--leviathan {
+  border-color: rgba(92, 64, 60, 0.5);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.9), 0 0 28px rgba(6, 182, 212, 0.18);
+}
+
+
