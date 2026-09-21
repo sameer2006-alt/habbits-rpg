@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Crown, Sparkles, Zap, Award } from "lucide-react";
 import type { RankDefinition } from "../types/game";
 import RankBadge from "./RankBadge";
+import "./CinematicRankUpModal.css";
 
 interface CinematicRankUpModalProps {
   newRank: RankDefinition | null;
@@ -30,18 +31,32 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClaim();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClaim]);
+
   if (!isOpen || !newRank) return null;
 
   return (
     <AnimatePresence>
-      <div className="rankup-cinematic-backdrop">
+      <div className="rankup-cinematic-backdrop" role="dialog" aria-modal="true">
         {/* Pulsing Energy Shockwaves */}
-        <div className="rankup-shockwave shockwave-1" />
-        <div className="rankup-shockwave shockwave-2" />
-        <div className="rankup-shockwave shockwave-3" />
+        <div className="rankup-shockwave shockwave-1" aria-hidden="true" />
+        <div className="rankup-shockwave shockwave-2" aria-hidden="true" />
+        <div className="rankup-shockwave shockwave-3" aria-hidden="true" />
 
         {/* Ambient Dark Particles */}
-        <div className="rankup-ambient-flare" style={{ "--flare-color": newRank.glowColor } as React.CSSProperties} />
+        <div
+          className="rankup-ambient-flare"
+          style={{ "--flare-color": newRank.glowColor } as React.CSSProperties}
+          aria-hidden="true"
+        />
 
         <motion.div
           className="rankup-content-container"
@@ -52,9 +67,9 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
         >
           {/* Top System Alarm Banner */}
           <div className="rankup-system-badge">
-            <Zap size={14} className="flash-icon" />
-            <span>THE SYSTEM HAS RECOGNIZED YOUR PROWESS</span>
-            <Zap size={14} className="flash-icon" />
+            <Zap size={14} className="flash-icon" aria-hidden="true" />
+            <span>[ SYSTEM DIRECTIVE // ASCENSION DETECTED ]</span>
+            <Zap size={14} className="flash-icon" aria-hidden="true" />
           </div>
 
           <h1 className="rankup-headline">
@@ -75,7 +90,7 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
             )}
 
             {previousRank && (
-              <div className="rankup-arrow-divider">
+              <div className="rankup-arrow-divider" aria-hidden="true">
                 <ChevronRight size={24} className="arrow-pulse" />
                 <ChevronRight size={24} className="arrow-pulse delay" />
               </div>
@@ -87,7 +102,7 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
               animate={{ scale: 1.1, rotate: 0, opacity: 1 }}
               transition={{ delay: 0.25, duration: 0.5, type: "spring", stiffness: 200 }}
             >
-              <div className="badge-halo" style={{ background: newRank.glowColor }} />
+              <div className="badge-halo" style={{ background: newRank.glowColor }} aria-hidden="true" />
               <RankBadge rankId={newRank.id} size="xl" />
             </motion.div>
           </div>
@@ -106,13 +121,13 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
           {/* Newly Unlocked Perks */}
           <div className="rankup-perks-box">
             <div className="rankup-perks-title">
-              <Sparkles size={15} style={{ color: newRank.color }} />
+              <Sparkles size={15} style={{ color: newRank.color }} aria-hidden="true" />
               <span>NEW POWERS & PRIVILEGES UNLOCKED</span>
             </div>
             <div className="rankup-perks-grid">
               {newRank.perks.map((perk, i) => (
                 <div key={i} className="rankup-perk-item">
-                  <Award size={14} style={{ color: newRank.color }} />
+                  <Award size={14} style={{ color: newRank.color, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
                   <span>{perk}</span>
                 </div>
               ))}
@@ -128,7 +143,7 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
               boxShadow: `0 0 25px ${newRank.glowColor}`,
             }}
           >
-            <Crown size={18} />
+            <Crown size={18} aria-hidden="true" />
             <span>ACCEPT ASCENSION POWER</span>
           </button>
         </motion.div>
@@ -138,4 +153,3 @@ export const CinematicRankUpModal: React.FC<CinematicRankUpModalProps> = ({
 };
 
 export default CinematicRankUpModal;
-

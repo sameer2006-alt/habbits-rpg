@@ -1,0 +1,324 @@
+/* ==========================================================================
+   HABBITS RPG — DATA-DRIVEN BOSS VICTORY MODAL (PHASE 5.13)
+   All rules strictly scoped within .boss-victory-backdrop
+   ========================================================================== */
+
+.boss-victory-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(3, 5, 8, 0.94);
+  backdrop-filter: blur(18px);
+  padding: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.boss-victory-backdrop * {
+  box-sizing: border-box;
+}
+
+/* Ambient Collapsing Vortex */
+.boss-victory-backdrop .boss-ambient-vortex {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 680px;
+  height: 680px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.35) 0%, rgba(20, 10, 16, 0.6) 60%, transparent 80%);
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.75;
+  animation: bossVortexPulse 3s infinite ease-in-out;
+}
+
+@keyframes bossVortexPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.85; }
+}
+
+/* Modal Chamber Enclosure */
+.boss-victory-backdrop .boss-victory-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 680px;
+  background: #0e0e11;
+  border: 1px solid rgba(220, 38, 38, 0.65);
+  border-radius: 1.25rem;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(220, 38, 38, 0.35);
+  text-align: center;
+  overflow: hidden;
+  margin: auto;
+}
+
+/* Top System Telemetry Directive */
+.boss-victory-backdrop .boss-directive-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(220, 38, 38, 0.16);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #ffb4ab;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.boss-victory-backdrop .boss-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #dc2626;
+  box-shadow: 0 0 8px #dc2626;
+  animation: bossDotPing 1.8s infinite ease-in-out;
+}
+
+@keyframes bossDotPing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Main Hero Title */
+.boss-victory-backdrop .boss-hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2.5rem;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0 0 0.35rem 0;
+  text-shadow: 0 0 30px rgba(220, 38, 38, 0.7);
+}
+
+.boss-victory-backdrop .boss-hero-title .accent-defeated {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.boss-victory-backdrop .boss-lore-quote {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ac8884;
+  margin: 0 auto 1.5rem auto;
+  max-width: 480px;
+}
+
+/* Avatar Frame & Disintegration Chamber */
+.boss-victory-backdrop .boss-avatar-frame {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 180px;
+  margin: 0 auto 1.25rem auto;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  background: #040608;
+  box-shadow: 0 0 30px rgba(220, 38, 38, 0.25);
+}
+
+.boss-victory-backdrop .boss-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.7) contrast(1.25) brightness(0.65);
+}
+
+.boss-victory-backdrop .boss-scrim-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #0e0e11 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Defeated Stamp Banner */
+.boss-victory-backdrop .boss-stamp-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-7deg);
+  border: 2px solid #dc2626;
+  background: rgba(14, 14, 17, 0.92);
+  backdrop-filter: blur(8px);
+  padding: 0.45rem 1.25rem;
+  border-radius: 0.45rem;
+  color: #dc2626;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  box-shadow: 0 0 24px rgba(220, 38, 38, 0.7);
+  pointer-events: none;
+}
+
+/* Boss Metadata */
+.boss-victory-backdrop .boss-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+}
+
+.boss-victory-backdrop .boss-subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  color: #ac8884;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.boss-victory-backdrop .boss-hp-bar {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.boss-victory-backdrop .boss-hp-track {
+  width: 100%;
+  height: 5px;
+  background: #2a2a2d;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.boss-victory-backdrop .boss-hp-fill {
+  width: 0%;
+  height: 100%;
+  background: #dc2626;
+}
+
+.boss-victory-backdrop .boss-hp-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: #ac8884;
+  margin-top: 0.35rem;
+  padding: 0 0.25rem;
+}
+
+/* Spoils Breakdown Grid */
+.boss-victory-backdrop .boss-spoils-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.65rem;
+  background: #1c1b1e;
+  border: 1px solid #2a2a2d;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.boss-victory-backdrop .boss-spoil-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.35rem;
+}
+
+.boss-victory-backdrop .spoil-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: #ac8884;
+  text-transform: uppercase;
+}
+
+.boss-victory-backdrop .spoil-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+  color: #ffffff;
+}
+
+.boss-victory-backdrop .spoil-val.xp { color: #ffb4ab; }
+.boss-victory-backdrop .spoil-val.coins { color: #ffdcc3; }
+.boss-victory-backdrop .spoil-val.stat { color: #38bdf8; }
+.boss-victory-backdrop .spoil-val.title {
+  color: #ffd700;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Harvest Action CTA */
+.boss-victory-backdrop .boss-harvest-btn {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 0.6rem;
+  background: linear-gradient(90deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 0 24px rgba(220, 38, 38, 0.5);
+  transition: all 0.2s ease-out;
+}
+
+.boss-victory-backdrop .boss-harvest-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.boss-victory-backdrop .boss-harvest-btn:active {
+  transform: scale(0.99);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .boss-victory-backdrop {
+    padding: 1rem;
+  }
+
+  .boss-victory-backdrop .boss-victory-container {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .boss-victory-backdrop .boss-hero-title {
+    font-size: 1.85rem;
+  }
+
+  .boss-victory-backdrop .boss-avatar-frame {
+    height: 140px;
+  }
+
+  .boss-victory-backdrop .boss-spoils-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+

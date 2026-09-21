@@ -1,0 +1,279 @@
+/* ==========================================================================
+   HABBITS RPG — CINEMATIC EVENT OVERLAY SYSTEM (PHASE 5.13)
+   All rules strictly scoped within .cinematic-event-overlay
+   ========================================================================== */
+
+.cinematic-event-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(5, 5, 7, 0.88);
+  backdrop-filter: blur(14px);
+  padding: 1.25rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cinematic-event-overlay * {
+  box-sizing: border-box;
+}
+
+/* Atmospheric Glow Behind Card */
+.cinematic-event-overlay .event-ambient-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.cinematic-event-overlay.intensity-low .event-ambient-glow {
+  width: 360px;
+  height: 360px;
+  opacity: 0.4;
+}
+
+.cinematic-event-overlay.intensity-medium .event-ambient-glow {
+  width: 500px;
+  height: 500px;
+  opacity: 0.6;
+}
+
+.cinematic-event-overlay.intensity-high .event-ambient-glow,
+.cinematic-event-overlay.intensity-very-high .event-ambient-glow {
+  width: 680px;
+  height: 680px;
+  opacity: 0.8;
+  animation: eventGlowPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes eventGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.65; }
+  50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.9; }
+}
+
+/* Event Card Box */
+.cinematic-event-overlay .event-card-box {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  background: #0e0e11;
+  border-radius: 1.25rem;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: auto;
+}
+
+.cinematic-event-overlay.intensity-low .event-card-box {
+  max-width: 480px;
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  box-shadow: 0 0 35px rgba(220, 38, 38, 0.25);
+  padding: 1.75rem 1.5rem;
+}
+
+.cinematic-event-overlay.intensity-medium .event-card-box {
+  max-width: 540px;
+  border: 1px solid var(--event-border-color, rgba(255, 215, 0, 0.45));
+  box-shadow: 0 0 45px var(--event-glow-color, rgba(255, 215, 0, 0.25));
+}
+
+.cinematic-event-overlay.intensity-high .event-card-box {
+  max-width: 620px;
+  border: 2px solid rgba(220, 38, 38, 0.75);
+  box-shadow: 0 0 65px rgba(220, 38, 38, 0.45);
+}
+
+.cinematic-event-overlay.intensity-very-high .event-card-box {
+  max-width: 640px;
+  border: 2px solid rgba(255, 215, 0, 0.75);
+  box-shadow: 0 0 75px rgba(255, 215, 0, 0.45);
+}
+
+/* Category Pill Tag */
+.cinematic-event-overlay .event-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.cinematic-event-overlay .event-category-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: eventDotPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes eventDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.7); }
+}
+
+/* Central Icon Frame */
+.cinematic-event-overlay .event-icon-frame {
+  width: 4.75rem;
+  height: 4.75rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+}
+
+.cinematic-event-overlay.intensity-very-high .event-icon-frame,
+.cinematic-event-overlay.intensity-high .event-icon-frame {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+}
+
+/* Headline & Subheadline */
+.cinematic-event-overlay .event-headline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.85rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+}
+
+.cinematic-event-overlay.intensity-very-high .event-headline,
+.cinematic-event-overlay.intensity-high .event-headline {
+  font-size: 2.25rem;
+}
+
+.cinematic-event-overlay .event-subheadline {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #ac8884;
+  max-width: 440px;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Structured Rewards / Telemetry Strip */
+.cinematic-event-overlay .event-rewards-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.cinematic-event-overlay .event-reward-chip {
+  background: #1c1b1e;
+  border: 1px solid #2a2a2d;
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #e5e1e5;
+}
+
+/* Dismiss Helper / CTA */
+.cinematic-event-overlay .event-dismiss-cta {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.55rem;
+  border: none;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease-out;
+}
+
+.cinematic-event-overlay.intensity-low .event-dismiss-cta {
+  background: #dc2626;
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.4);
+}
+
+.cinematic-event-overlay.intensity-medium .event-dismiss-cta {
+  background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.45);
+}
+
+.cinematic-event-overlay.intensity-high .event-dismiss-cta {
+  background: linear-gradient(90deg, #dc2626 0%, #991b1b 100%);
+  box-shadow: 0 0 28px rgba(220, 38, 38, 0.6);
+}
+
+.cinematic-event-overlay.intensity-very-high .event-dismiss-cta {
+  background: linear-gradient(90deg, #ad5d00 0%, #d97706 100%);
+  box-shadow: 0 0 28px rgba(217, 119, 6, 0.55);
+}
+
+.cinematic-event-overlay .event-dismiss-cta:hover {
+  filter: brightness(1.15);
+}
+
+.cinematic-event-overlay .event-tap-hint {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: #8a6b70;
+  margin-top: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .cinematic-event-overlay {
+    padding: 1rem;
+  }
+
+  .cinematic-event-overlay .event-card-box {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .cinematic-event-overlay .event-headline {
+    font-size: 1.45rem;
+  }
+
+  .cinematic-event-overlay .event-icon-frame {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+

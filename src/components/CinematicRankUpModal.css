@@ -1,0 +1,345 @@
+/* ==========================================================================
+   HABBITS RPG — CINEMATIC RANK ASCENSION MODAL (PHASE 5.13)
+   All rules strictly scoped within .rankup-cinematic-backdrop
+   ========================================================================== */
+
+.rankup-cinematic-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(5, 5, 7, 0.92);
+  backdrop-filter: blur(16px);
+  padding: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.rankup-cinematic-backdrop * {
+  box-sizing: border-box;
+}
+
+/* Pulsing Energy Shockwaves */
+.rankup-cinematic-backdrop .rankup-shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  pointer-events: none;
+  animation: rankupShockwavePulse 4s infinite linear;
+}
+
+.rankup-cinematic-backdrop .shockwave-1 {
+  width: 420px;
+  height: 420px;
+  animation-delay: 0s;
+}
+
+.rankup-cinematic-backdrop .shockwave-2 {
+  width: 680px;
+  height: 680px;
+  animation-delay: 1.3s;
+}
+
+.rankup-cinematic-backdrop .shockwave-3 {
+  width: 960px;
+  height: 960px;
+  animation-delay: 2.6s;
+}
+
+@keyframes rankupShockwavePulse {
+  0% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+/* Ambient Dark Flare */
+.rankup-cinematic-backdrop .rankup-ambient-flare {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 580px;
+  height: 580px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--flare-color, rgba(220, 38, 38, 0.35)) 0%, transparent 65%);
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Modal Content Box */
+.rankup-cinematic-backdrop .rankup-content-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 680px;
+  background: #0e0e11;
+  border: 1px solid rgba(220, 38, 38, 0.65);
+  border-radius: 1.25rem;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(220, 38, 38, 0.35);
+  text-align: center;
+  overflow: hidden;
+  margin: auto;
+}
+
+/* Top System Badge */
+.rankup-cinematic-backdrop .rankup-system-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  color: #ffb4ab;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.rankup-cinematic-backdrop .flash-icon {
+  color: #ffb4ab;
+  animation: rankupFlash 1.5s infinite ease-in-out;
+}
+
+@keyframes rankupFlash {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Main Headlines */
+.rankup-cinematic-backdrop .rankup-headline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0 0 0.4rem 0;
+  text-shadow: 0 0 30px rgba(220, 38, 38, 0.6);
+}
+
+.rankup-cinematic-backdrop .rankup-subheadline {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ac8884;
+  margin-bottom: 1.75rem;
+}
+
+/* Transformation Stage: Old Rank -> New Rank */
+.rankup-cinematic-backdrop .rankup-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 1.5rem 0 2rem 0;
+}
+
+.rankup-cinematic-backdrop .rankup-prev-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 0.6;
+  filter: grayscale(0.3);
+}
+
+.rankup-cinematic-backdrop .rankup-prev-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #ac8884;
+  text-transform: uppercase;
+}
+
+.rankup-cinematic-backdrop .rankup-arrow-divider {
+  display: flex;
+  align-items: center;
+  gap: -0.35rem;
+  color: #dc2626;
+}
+
+.rankup-cinematic-backdrop .arrow-pulse {
+  animation: rankupArrowPulse 1.2s infinite ease-in-out;
+}
+
+.rankup-cinematic-backdrop .arrow-pulse.delay {
+  animation-delay: 0.4s;
+  opacity: 0.6;
+}
+
+@keyframes rankupArrowPulse {
+  0%, 100% { opacity: 0.3; transform: translateX(-2px); }
+  50% { opacity: 1; transform: translateX(3px); }
+}
+
+.rankup-cinematic-backdrop .rankup-main-badge-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rankup-cinematic-backdrop .badge-halo {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Rank Title Block */
+.rankup-cinematic-backdrop .rankup-title-block {
+  margin-bottom: 1.5rem;
+}
+
+.rankup-cinematic-backdrop .rankup-tier-tag {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 0.35rem;
+  border: 1px solid currentColor;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.rankup-cinematic-backdrop .rankup-rank-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 25px currentColor;
+}
+
+.rankup-cinematic-backdrop .rankup-lore-quote {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-style: italic;
+  color: #e6bdb8;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Unlocked Perks Grid */
+.rankup-cinematic-backdrop .rankup-perks-box {
+  background: #1c1b1e;
+  border: 1px solid #2a2a2d;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.rankup-cinematic-backdrop .rankup-perks-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #ffb4ab;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.rankup-cinematic-backdrop .rankup-perks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 1rem;
+}
+
+.rankup-cinematic-backdrop .rankup-perk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  color: #e5e1e5;
+  line-height: 1.35;
+}
+
+/* Claim CTA Button */
+.rankup-cinematic-backdrop .rankup-claim-btn {
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 0.6rem;
+  color: #ffffff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  transition: all 0.22s ease-out;
+}
+
+.rankup-cinematic-backdrop .rankup-claim-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.rankup-cinematic-backdrop .rankup-claim-btn:active {
+  transform: scale(0.99);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .rankup-cinematic-backdrop {
+    padding: 1rem;
+  }
+
+  .rankup-cinematic-backdrop .rankup-content-container {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .rankup-cinematic-backdrop .rankup-headline {
+    font-size: 1.7rem;
+  }
+
+  .rankup-cinematic-backdrop .rankup-perks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rankup-cinematic-backdrop .rankup-stage {
+    gap: 0.75rem;
+  }
+}
+
