@@ -473,14 +473,8 @@ Weekly Challenges are multi-objective trials spanning Monday through Sunday:
 - **Idempotent & Expirable**: Rewards are granted once upon completing all objectives. Once the week concludes on Sunday night, the challenge expires and a fresh challenge begins Monday!`;
   }
 
-  // How does Equipment & Loadouts work?
   // How does the Armory, Equipment, Inventory & Loadouts work?
   if (q.includes("equipment") || q.includes("gear") || q.includes("loadout") || q.includes("armory") || q.includes("inventory")) {
-    return `### Armory, Equipment & Loadouts (Phase 3)
-- **3 Equipment Slots**: Equip one Weapon, one Armor, and one Accessory.
-- **Effective Combat Stats**: Equipped items grant stat bonuses (e.g. +8 STR, +4 DIS). Your base stats are never permanently modified, preventing corruption.
-- **Inventory**: Stores all acquired items grouped by Equipment, Consumables, and Special Trophies.
-- **Loadout Presets (Max 5)**: Save up to 5 complete equipment configurations in the Armory. Loadout activation atomically verifies that you own all assigned gear before equipping.`;
     return `### Armory Architecture (Phase 3 & Phase 4 Polish)
 The Armory manages what you own, what you equip, and how your Hunter is built:
 - **INVENTORY**: Things you own (Equipment, Consumables, and Special Trophies).

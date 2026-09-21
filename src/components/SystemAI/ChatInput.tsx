@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, CornerDownLeft } from "lucide-react";
+import { CornerDownLeft } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -35,96 +35,70 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const handleClear = () => {
+    setText("");
+    inputRef.current?.focus();
+  };
+
   const charCount = text.length;
   const isOverLimit = charCount > maxLength;
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "6px",
-        width: "100%",
-        marginTop: "12px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "rgba(10, 0, 6, 0.85)",
-          border: isOverLimit ? "1px solid #ef4444" : "1px solid #3a1319",
-          borderRadius: "4px",
-          padding: "6px 8px 6px 14px",
-          boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5)",
-          transition: "border-color 160ms ease",
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            isLoading
-              ? "System AI is synthesizing response..."
-              : "Ask System AI anything (e.g. 'Why am I not ranking up?')..."
-          }
-          disabled={isLoading}
-          maxLength={maxLength + 10}
-          style={{
-            flex: 1,
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "#f2e9e9",
-            fontSize: "0.92rem",
-            padding: "6px 0",
-          }}
-        />
+    <div className="ai-input-dock">
+      <form onSubmit={handleSubmit} className="ai-input-form">
+        <div className="ai-input-cavity" style={isOverLimit ? { borderColor: "#ef4444" } : undefined}>
+          <div className="ai-prompt-prefix">&gt;_</div>
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isLoading
+                ? "System AI is synthesizing response..."
+                : "Ask System AI anything (e.g. 'Why am I not ranking up?')..."
+            }
+            disabled={isLoading}
+            maxLength={maxLength + 10}
+            className="ai-input-field"
+          />
 
-        <button
-          type="submit"
-          disabled={isLoading || !text.trim() || isOverLimit}
-          className="primary"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "8px 16px",
-            fontSize: "0.8rem",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            cursor: isLoading || !text.trim() || isOverLimit ? "not-allowed" : "pointer",
-            opacity: isLoading || !text.trim() || isOverLimit ? 0.5 : 1,
-          }}
-        >
-          <span>Send</span>
-          <Send size={14} />
-        </button>
-      </div>
+          <div className="ai-input-actions">
+            {text.length > 0 && !isLoading && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="ai-input-clear-btn"
+                title="Clear input"
+              >
+                ESC / CLEAR
+              </button>
+            )}
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "0 4px",
-          fontSize: "0.72rem",
-          color: "#8a6b70",
-        }}
-      >
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-          Press <CornerDownLeft size={10} /> to send
-        </span>
-        <span style={{ color: isOverLimit ? "#ef4444" : "#8a6b70", fontWeight: isOverLimit ? 700 : 400 }}>
-          {charCount} / {maxLength}
-        </span>
-      </div>
-    </form>
+            <button
+              type="submit"
+              disabled={isLoading || !text.trim() || isOverLimit}
+              className="ai-transmit-btn"
+              title="Transmit Query (Enter)"
+            >
+              <span>{isLoading ? "TRANSMITTING..." : "TRANSMIT"}</span>
+              <CornerDownLeft size={13} />
+            </button>
+          </div>
+        </div>
+
+        <div className="ai-input-footer">
+          <div style={{ display: "flex", gap: "12px" }}>
+            <span>ENTER TO TRANSMIT</span>
+            <span>•</span>
+            <span>RESTRICTED TO LEVEL/XP/SYSTEM INTEL</span>
+          </div>
+          <div style={{ color: isOverLimit ? "#ef4444" : "var(--ai-text-dim)" }}>
+            {charCount}/{maxLength}
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
