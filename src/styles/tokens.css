@@ -1,0 +1,114 @@
+/**
+ * HABBITS RPG — DESIGN TOKENS
+ * Visual Source of Truth: Stitch MCP "Habbits RPG System UI"
+ * Reference: DESIGN.md
+ */
+
+:root {
+  /* --- CANVASES & ABYSSAL VOIDS --- */
+  --bg-base: #0b0b0e;
+  --bg-void: #070709;
+
+  /* --- SURFACE ELEVATION SCALE --- */
+  --surface-dim: #0f0e13;
+  --surface-low: #131116;
+  --surface-container: #18161b;
+  --surface-high: #242025;
+  --surface-highest: #2e2930;
+  --surface-bright: #353438;
+
+  /* --- CRIMSON & BURGUNDY COMBAT ACCENTS --- */
+  --crimson-vivid: #dc2626;
+  --crimson-deep: #bf0715;
+  --crimson-base: #b91c1c;
+  --crimson-light: #ffb4ab;
+  --crimson-tint: #ffdad6;
+  --burgundy-dark: #93000a;
+  --burgundy-abyssal: #690005;
+  --burgundy-container: #26171d;
+  --burgundy-subtle: #48363c;
+  --burgundy-outline: #433235;
+
+  /* --- MUTED GOLD & AMBER DISCIPLINE ACCENTS --- */
+  --gold-amber: #f59e0b;
+  --gold-vivid: #d97706;
+  --gold-highlight: #ffb77d;
+  --gold-light: #ffdcc3;
+  --gold-foundation: #ad5d00;
+  --gold-dark: #6e3900;
+  --gold-abyssal: #2f1500;
+
+  /* --- TACTICAL CYAN SYSTEM MANA ACCENTS --- */
+  --cyan-tactical: #38bdf8;
+  --cyan-system: #00e5ff;
+  --cyan-dim: #00daf3;
+  --cyan-glow: rgba(0, 229, 255, 0.15);
+
+  /* --- SEMANTIC STATUSES --- */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #38bdf8;
+
+  /* --- TEXT & MONOSPACE READOUT COLORS --- */
+  --text-primary: #eee9ee;
+  --text-secondary: #c9b6b6;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --text-crimson: #ffb4ab;
+  --text-gold: #ffdcc3;
+  --text-cyan: #38bdf8;
+
+  /* --- TYPOGRAPHY SCALE & FAMILIES --- */
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* --- SPACING SCALE --- */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem;  /* 8px */
+  --space-md: 1rem;    /* 16px */
+  --space-lg: 1.5rem;  /* 24px */
+  --space-xl: 2.5rem;  /* 40px */
+  --gutter-desktop: 2rem;
+  --margin-desktop: 2.5rem;
+  --gutter-mobile: 1rem;
+  --margin-mobile: 1.25rem;
+
+  /* --- BORDER RADII --- */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* --- SHADOWS & PHOTONIC GLOWS --- */
+  --shadow-card: 0 8px 32px -4px rgba(0, 0, 0, 0.75);
+  --shadow-panel: 0 18px 42px -6px rgba(0, 0, 0, 0.85);
+  --glow-crimson: 0 0 20px rgba(220, 38, 38, 0.4);
+  --glow-crimson-subtle: 0 0 12px rgba(220, 38, 38, 0.2);
+  --glow-crimson-inset: inset 0 0 12px rgba(220, 38, 38, 0.15);
+  --glow-gold: 0 0 24px rgba(245, 158, 11, 0.35);
+  --glow-gold-inset: inset 0 0 10px rgba(245, 158, 11, 0.12);
+  --glow-cyan: 0 0 16px rgba(0, 229, 255, 0.3);
+  --glow-cyan-inset: inset 0 0 8px rgba(0, 229, 255, 0.1);
+
+  /* --- BORDERS & HAIRLINES --- */
+  --border-hairline: 1px solid var(--burgundy-outline);
+  --border-subtle: 1px solid rgba(255, 255, 255, 0.06);
+  --border-focus-crimson: 1px solid var(--crimson-vivid);
+  --border-focus-cyan: 1px solid var(--cyan-system);
+
+  /* --- BACKWARD-COMPATIBLE ALIASES FOR LEGACY APP.CSS --- */
+  --void: var(--bg-base);
+  --panel: var(--surface-container);
+  --panel-2: var(--surface-high);
+  --line: var(--burgundy-outline);
+  --red: var(--crimson-vivid);
+  --crimson: var(--burgundy-dark);
+  --gold: var(--gold-amber);
+  --text: var(--text-primary);
+  --muted: var(--text-muted);
+}
+
