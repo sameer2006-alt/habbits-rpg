@@ -1,8 +1,9 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Award,
   Bot,
+  Calendar,
   Home,
   Shield,
   ShoppingBag,
@@ -29,6 +30,7 @@ import Boss from "./pages/Boss";
 import Shop from "./pages/Shop";
 import RankProgression from "./pages/RankProgression";
 import SystemAI from "./pages/SystemAI";
+import Seasons from "./pages/Seasons";
 import Toast from "./components/Toast";
 import EventOverlay from "./components/EventOverlay";
 import type { EventType } from "./components/EventOverlay";
@@ -132,6 +134,7 @@ const navigation = [
   { to: "/ranks", label: "Ranks", icon: Award },
   { to: "/stats", label: "Profile", icon: User },
   { to: "/armory", label: "Armory", icon: Shield },
+  { to: "/seasons", label: "Seasons", icon: Calendar },
   { to: "/achievements", label: "Achievements", icon: Trophy },
   { to: "/shop", label: "Shop", icon: ShoppingBag },
   { to: "/boss", label: "Boss", icon: Skull },
@@ -1153,7 +1156,7 @@ function App() {
       return;
     }
     if (level > previousLevelRef.current) {
-      showEvent("quest_complete", "LEVEL UP", `You are now Level ${level}`);
+      showEvent("level_up", `LEVEL UP // LEVEL ${level}`, `Hunter parameters elevated. You have ascended to Level ${level}.`);
       previousLevelRef.current = level;
     }
   }, [level]);
@@ -1193,6 +1196,7 @@ function App() {
   return (
     <>
       <Toast message={toastMessage} />
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       <EventOverlay event={gameEvent} onClose={dismissEvent} />
 
       <div className="app-shell">
@@ -1231,6 +1235,7 @@ function App() {
                     allQuestsCompleted={allQuestsCompleted}
                     level={level}
                     xpIntoLevel={xpIntoLevel}
+                    powerScore={powerScore}
                     dailyDirective={dailyDirective}
                     perfectDayRecord={perfectDayRecord}
                     randomEvent={randomEvent}
@@ -1297,7 +1302,7 @@ function App() {
 
               <Route
                 path="/achievements"
-                element={<Achievements achievements={achievements} />}
+                element={<Achievements achievements={achievements} player={player} />}
               />
               <Route path="/awards" element={<Navigate to="/achievements" replace />} />
 
@@ -1353,6 +1358,20 @@ function App() {
                     monthlyChallenge={monthlyChallenge}
                     playerSeason={playerSeason}
                     records={personalRecords}
+                  />
+                }
+              />
+              <Route
+                path="/seasons"
+                element={
+                  <Seasons
+                    player={player}
+                    playerSeason={playerSeason}
+                    weeklyChallenge={weeklyChallenge}
+                    monthlyChallenge={monthlyChallenge}
+                    personalRecords={personalRecords}
+                    powerScore={powerScore}
+                    onClaimSeasonMilestone={handleClaimSeasonMilestone}
                   />
                 }
               />
