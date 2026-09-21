@@ -1,0 +1,1067 @@
+/* ==========================================================================
+   HABBITS RPG - ACHIEVEMENTS // TRIAL ARCHIVE COMMAND CENTER
+   Strictly scoped under .achievements-root (Zero global CSS pollution)
+   Design System: DESIGN.md & Stitch Visual Source of Truth
+   ========================================================================== */
+
+.achievements-root {
+  --ach-bg-base: #131316;
+  --ach-bg-lowest: #0e0e11;
+  --ach-bg-surface: #1c1b1e;
+  --ach-bg-container: #201f22;
+  --ach-bg-high: #2a2a2d;
+  --ach-bg-highest: #353438;
+
+  --ach-primary: #ffb4ab;
+  --ach-primary-container: #dc2626;
+  --ach-primary-glow: rgba(220, 38, 38, 0.4);
+  --ach-tertiary: #ffb77d;
+  --ach-tertiary-container: #ad5d00;
+  --ach-tertiary-glow: rgba(217, 119, 6, 0.35);
+
+  --ach-text-main: #e5e1e5;
+  --ach-text-muted: #ac8884;
+  --ach-text-variant: #e6bdb8;
+  --ach-border: rgba(172, 136, 132, 0.2);
+  --ach-border-focus: rgba(220, 38, 38, 0.5);
+
+  --tier-bronze: #cd7f32;
+  --tier-silver: #c0c0c0;
+  --tier-gold: #ffd700;
+  --tier-platinum: #38bdf8;
+  --tier-legendary: #dc2626;
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--ach-bg-base);
+  color: var(--ach-text-main);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Atmospheric ambient radial flares */
+.achievements-root .ach-ambient-flare-1 {
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.12) 0%, transparent 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.achievements-root .ach-ambient-flare-2 {
+  position: absolute;
+  top: 30%;
+  right: -100px;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(173, 93, 0, 0.1) 0%, transparent 70%);
+  filter: blur(110px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.achievements-root .ach-ambient-flare-3 {
+  position: absolute;
+  bottom: 5%;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.08) 0%, transparent 70%);
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Page container */
+.achievements-root .ach-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .achievements-root .ach-container {
+    padding: 2rem 2rem 4rem 2rem;
+    gap: 2rem;
+  }
+}
+
+/* Monospace Breadcrumb Strip */
+.achievements-root .ach-breadcrumb-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: "Space Grotesk", monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.achievements-root .ach-protocol-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ach-text-muted);
+}
+
+.achievements-root .ach-protocol-prefix {
+  color: var(--ach-primary-container);
+  font-weight: 700;
+}
+
+.achievements-root .ach-clearance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ach-bg-surface);
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 183, 125, 0.2);
+}
+
+.achievements-root .ach-clearance-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ach-tertiary);
+  box-shadow: 0 0 8px var(--ach-tertiary);
+  animation: ach-pulse 2s infinite;
+}
+
+@keyframes ach-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+/* Header & Title Lockup */
+.achievements-root .ach-header-lockup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .achievements-root .ach-header-lockup {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.achievements-root .ach-main-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .achievements-root .ach-main-title {
+    font-size: 2.5rem;
+  }
+}
+
+.achievements-root .ach-title-divider {
+  color: var(--ach-primary-container);
+  font-weight: 300;
+}
+
+.achievements-root .ach-title-sub {
+  color: var(--ach-text-variant);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.achievements-root .ach-subtitle-text {
+  color: var(--ach-text-muted);
+  font-size: 0.925rem;
+  line-height: 1.5;
+  max-width: 720px;
+  margin: 0;
+}
+
+.achievements-root .ach-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  background: var(--ach-bg-container);
+  border: 1px solid rgba(255, 183, 125, 0.25);
+  color: var(--ach-tertiary);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+/* 4-Metric Progression Telemetry Grid */
+.achievements-root .ach-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .achievements-root .ach-telemetry-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+}
+
+.achievements-root .ach-metric-card {
+  position: relative;
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.achievements-root .ach-metric-card:hover {
+  border-color: rgba(220, 38, 38, 0.3);
+  transform: translateY(-2px);
+}
+
+.achievements-root .ach-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ach-text-muted);
+}
+
+.achievements-root .ach-metric-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.achievements-root .ach-metric-number {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ach-tertiary);
+}
+
+.achievements-root .ach-metric-label {
+  font-size: 0.85rem;
+  color: var(--ach-text-muted);
+}
+
+.achievements-root .ach-metric-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ach-text-variant);
+}
+
+/* Segmented progress bar in Card 2 */
+.achievements-root .ach-segmented-track {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  width: 100%;
+  height: 8px;
+  margin: 0.5rem 0;
+}
+
+.achievements-root .ach-segment {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ach-bg-highest);
+  transition: background 0.3s ease;
+}
+
+.achievements-root .ach-segment-filled-primary {
+  background: var(--ach-primary-container);
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.6);
+}
+
+.achievements-root .ach-segment-filled-tertiary {
+  background: var(--ach-tertiary);
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.6);
+}
+
+/* Filter & Sort Navigation Bar */
+.achievements-root .ach-filter-bar {
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 1024px) {
+  .achievements-root .ach-filter-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.achievements-root .ach-filters-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.achievements-root .ach-filters-left::-webkit-scrollbar {
+  display: none;
+}
+
+.achievements-root .ach-filter-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  background: var(--ach-bg-container);
+  border: 1px solid transparent;
+  color: var(--ach-text-muted);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.achievements-root .ach-filter-chip:hover {
+  background: var(--ach-bg-high);
+  color: var(--ach-text-main);
+}
+
+.achievements-root .ach-filter-chip-active {
+  background: var(--ach-primary-container);
+  color: #fff6f5;
+  border-color: rgba(220, 38, 38, 0.8);
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.4);
+}
+
+.achievements-root .ach-chip-count {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.achievements-root .ach-filter-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--ach-bg-highest);
+  margin: 0 0.2rem;
+  flex-shrink: 0;
+}
+
+.achievements-root .ach-filters-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+@media (min-width: 1024px) {
+  .achievements-root .ach-filters-right {
+    align-self: center;
+  }
+}
+
+.achievements-root .ach-sort-select {
+  appearance: none;
+  background: var(--ach-bg-container);
+  color: var(--ach-text-main);
+  border: 1px solid var(--ach-border);
+  border-radius: 8px;
+  padding: 0.4rem 2rem 0.4rem 0.85rem;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  outline: none;
+  min-height: 38px;
+}
+
+.achievements-root .ach-sort-select:focus {
+  border-color: var(--ach-primary-container);
+}
+
+.achievements-root .ach-sort-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.achievements-root .ach-sort-arrow {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--ach-text-muted);
+  font-size: 0.9rem;
+}
+
+/* Widescreen Dual-Column Layout */
+.achievements-root .ach-main-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .achievements-root .ach-main-layout {
+    grid-template-columns: 8fr 4fr;
+    gap: 1.75rem;
+  }
+}
+
+/* Grid Meta Header */
+.achievements-root .ach-grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ach-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.achievements-root .ach-telemetry-active {
+  color: var(--ach-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Achievement Cards Grid (Desktop 3 cols, Tablet 2 cols, Mobile 1 col) */
+.achievements-root .ach-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .achievements-root .ach-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .achievements-root .ach-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Achievement Card */
+.achievements-root .ach-card {
+  position: relative;
+  border-radius: 12px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Corner bracket for tactical telemetry */
+.achievements-root .ach-card-bracket {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--card-accent, #dc2626);
+  border-left: 2px solid var(--card-accent, #dc2626);
+  pointer-events: none;
+}
+
+/* Unlocked card appearance */
+.achievements-root .ach-card-unlocked {
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.achievements-root .ach-card-unlocked:hover {
+  background: var(--ach-bg-container);
+  border-color: var(--card-accent, #dc2626);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Locked card appearance */
+.achievements-root .ach-card-locked {
+  background: var(--ach-bg-lowest);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  opacity: 0.85;
+}
+
+.achievements-root .ach-card-locked:hover {
+  background: var(--ach-bg-surface);
+  border-color: rgba(172, 136, 132, 0.3);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+/* Active / Selected Card Highlight */
+.achievements-root .ach-card-selected {
+  border-color: var(--card-accent, #dc2626) !important;
+  box-shadow: 0 0 20px var(--card-glow, rgba(220, 38, 38, 0.35)) !important;
+}
+
+/* Card Header */
+.achievements-root .ach-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.achievements-root .ach-card-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--ach-bg-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 14px var(--card-glow, rgba(220, 38, 38, 0.2));
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.achievements-root .ach-card:hover .ach-card-icon-box {
+  transform: scale(1.06);
+}
+
+.achievements-root .ach-card-tag {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--ach-bg-highest);
+  color: var(--ach-tertiary);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.achievements-root .ach-card-tag-locked {
+  background: var(--ach-bg-container);
+  color: var(--ach-text-muted);
+}
+
+/* Card Body */
+.achievements-root .ach-card-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ach-text-main);
+  line-height: 1.3;
+  margin-bottom: 0.35rem;
+  transition: color 0.2s ease;
+}
+
+.achievements-root .ach-card-unlocked:hover .ach-card-title {
+  color: var(--ach-primary);
+}
+
+.achievements-root .ach-card-desc {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ach-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Card Progress Footer */
+.achievements-root .ach-card-footer {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.achievements-root .ach-card-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.achievements-root .ach-progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--ach-bg-highest);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.achievements-root .ach-progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bottom Ascension Teaser Strip */
+.achievements-root .ach-ascension-teaser {
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.15rem;
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-width: 640px) {
+  .achievements-root .ach-ascension-teaser {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.achievements-root .ach-teaser-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.achievements-root .ach-teaser-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255, 183, 125, 0.15);
+  color: var(--ach-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.achievements-root .ach-teaser-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ach-text-main);
+}
+
+.achievements-root .ach-teaser-desc {
+  font-size: 0.8rem;
+  color: var(--ach-text-muted);
+}
+
+.achievements-root .ach-teaser-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  background: var(--ach-bg-container);
+  border: 1px solid rgba(255, 183, 125, 0.3);
+  color: var(--ach-tertiary);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.achievements-root .ach-teaser-btn:hover {
+  background: var(--ach-bg-high);
+  color: #fff;
+  border-color: var(--ach-tertiary);
+}
+
+/* RIGHT COLUMN: ARCHIVE INSPECTOR // FEAT DOSSIER */
+.achievements-root .ach-inspector-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .achievements-root .ach-inspector-col {
+    position: sticky;
+    top: 5.5rem;
+  }
+}
+
+.achievements-root .ach-dossier-box {
+  position: relative;
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* Watermark rune blur */
+.achievements-root .ach-dossier-watermark {
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(20px);
+}
+
+.achievements-root .ach-dossier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ach-text-muted);
+}
+
+.achievements-root .ach-dossier-active-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--ach-bg-high);
+  color: var(--ach-tertiary);
+  font-weight: 700;
+}
+
+/* Large Emblem Display */
+.achievements-root .ach-dossier-emblem-wrap {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: 14px;
+  background: var(--ach-bg-container);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.achievements-root .ach-dossier-icon-glow {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  background: var(--ach-bg-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px var(--card-glow, rgba(220, 38, 38, 0.4));
+}
+
+.achievements-root .ach-emblem-pulse-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ach-tertiary);
+  box-shadow: 0 0 10px var(--ach-tertiary);
+  animation: ach-pulse 1.8s infinite;
+}
+
+.achievements-root .ach-dossier-feat-tag {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ach-tertiary);
+}
+
+/* Dossier Content */
+.achievements-root .ach-dossier-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ach-text-main);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.achievements-root .ach-dossier-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--ach-text-muted);
+  margin: 0;
+}
+
+/* Metadata Grid */
+.achievements-root .ach-dossier-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: var(--ach-bg-container);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+}
+
+.achievements-root .ach-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.achievements-root .ach-meta-key {
+  color: var(--ach-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.achievements-root .ach-meta-val {
+  font-weight: 700;
+  color: var(--ach-text-main);
+  letter-spacing: 0.02em;
+}
+
+/* ==========================================================================
+   NEXT MILESTONES (Inside Right Sidebar Column)
+   ========================================================================== */
+.achievements-root .ach-milestones-section {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.achievements-root .ach-milestones-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.achievements-root .ach-milestones-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--ach-text-main);
+  margin: 0;
+}
+
+.achievements-root .ach-milestones-subtitle {
+  font-size: 0.78rem;
+  color: var(--ach-text-muted);
+  margin: 0.15rem 0 0 0;
+}
+
+.achievements-root .ach-milestones-badge {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ach-tertiary);
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 183, 125, 0.25);
+  white-space: nowrap;
+}
+
+.achievements-root .ach-milestones-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.achievements-root .ach-milestone-card {
+  position: relative;
+  background: var(--ach-bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: unset;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.achievements-root .ach-milestone-card:hover {
+  background: var(--ach-bg-container);
+  border-color: rgba(220, 38, 38, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.achievements-root .ach-milestone-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.achievements-root .ach-milestone-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--ach-bg-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px var(--card-glow, rgba(220, 38, 38, 0.2));
+  flex-shrink: 0;
+}
+
+.achievements-root .ach-milestone-tier-pill {
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--ach-bg-highest);
+  color: var(--ach-tertiary);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.achievements-root .ach-milestone-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: var(--ach-text-main);
+  line-height: 1.3;
+  margin: 0 0 0.2rem 0;
+}
+
+.achievements-root .ach-milestone-desc {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--ach-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.achievements-root .ach-milestone-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.achievements-root .ach-milestone-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.achievements-root .ach-milestone-counts {
+  color: var(--ach-text-variant);
+  text-transform: uppercase;
+}
+
+.achievements-root .ach-milestone-pct {
+  color: var(--ach-primary);
+  font-family: monospace;
+}
+
+.achievements-root .ach-milestone-remaining {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ach-tertiary);
+  text-align: right;
+  margin-top: 0.1rem;
+}
+
+
+
+
+
+
