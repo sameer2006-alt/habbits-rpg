@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Award,
+  Check,
   CheckCircle2,
   ChevronRight,
   Flame,
@@ -11,16 +13,22 @@ import {
   Sparkles,
   Swords,
   Target,
+  TrendingUp,
   Zap,
+  Activity,
+  ArrowRight,
 } from "lucide-react";
-import type { Player, RankDefinition } from "../types/game";
+import type { Player, RankDefinition, StatName } from "../types/game";
 import {
   RANK_DEFINITIONS,
   calculateRankProgress,
   checkSpecialCondition,
 } from "../data/ranks";
+import { calculatePowerScore } from "../lib/powerScore";
+import { getRequiredXP, getXPIntoCurrentLevel } from "../utils/levelSystem";
 import RankBadge from "../components/RankBadge";
 import RankInspectorModal from "../components/RankInspectorModal";
+import "./RankProgression.css";
 
 interface RankProgressionProps {
   player: Player;
@@ -55,231 +63,829 @@ export const RankProgression: React.FC<RankProgressionProps> = ({
     bossesSlain: userStats.bossesSlain,
   });
 
-  const { currentRank, nextRank, overallPercent, xpRemaining, tasksRemaining, streakRemaining } =
-    progressInfo;
+  const {
+    currentRank,
+    nextRank,
+    overallPercent,
+    allRequirementsMet,
+    xpRemaining,
+    tasksRemaining,
+    streakRemaining,
+    specialRemainingText,
+  } = progressInfo;
+
+  // Derive dynamic Power Score rating
+  const powerScore = calculatePowerScore({
+    level: player.progress.level,
+    rankTierOrder: currentRank.tierOrder,
+    effectiveStats: player.stats,
+    totalQuestsCompleted,
+    bestStreak: player.progress.bestStreak ?? player.progress.currentStreak,
+    bossesSlain: bossesDefeatedCount,
+    achievementsUnlocked: 0,
+  });
+
+  // Calculate Level XP metrics
+  const currentLevelXP = getXPIntoCurrentLevel(player.progress.totalXP);
+  const reqLevelXP = getRequiredXP(player.progress.level);
+  const levelPercent = Math.min(
+    100,
+    Math.floor((currentLevelXP / Math.max(1, reqLevelXP)) * 100)
+  );
+
+  // Criteria counts
+  const totalCriteria = nextRank ? 3 + (nextRank.specialConditionText ? 1 : 0) : 0;
+  const satisfiedCriteria = progressInfo.requirements.filter((r) => r.completed).length;
+
+  // Stat benchmark highest value
+  const statEntries = Object.entries(player.stats || {}) as [StatName, number][];
+  const sortedStats = [...statEntries].sort((a, b) => b[1] - a[1]);
+  const highestStat = sortedStats[0] || ["focus", 0];
 
   return (
-    <div className="rank-progression-page">
-      {/* Top Breadcrumb / System Header */}
-      <div className="rank-page-header">
-        <div className="rank-page-header-title">
-          <div className="system-tag-line">
-            <Shield size={14} />
-            <span>HUNTER ASSOCIATION REGISTRATION & RANK REGISTRY</span>
-          </div>
-          <h1>RANK PROGRESSION SYSTEM</h1>
-          <p className="system-subtitle">
-            Ascend through the 10 echelons of power. Rank advancement demands absolute discipline across XP, tasks, consistency, and boss subjugation.
-          </p>
-        </div>
-      </div>
-
-      {/* Hero Active Status & Next Rank Breakdown */}
-      <div className="rank-hero-grid">
-        {/* Current Active Rank Card */}
-        <div
-          className="rank-hero-card current-rank-hero"
-          style={
-            {
-              "--card-accent": currentRank.color,
-              "--card-glow": currentRank.glowColor,
-            } as React.CSSProperties
-          }
-        >
-          <div className="card-top-tag">
-            <span className="live-dot" /> CURRENT ASSIGNED RANK
-          </div>
-
-          <div className="current-rank-content">
-            <div className="hero-badge-container">
-              <RankBadge rankId={currentRank.id} size="xl" interactive onClick={() => setSelectedRank(currentRank)} />
+    <div className="rank-root">
+      <div className="rank-content-wrapper">
+        {/* ==================================================================
+            1. TOP BREADCRUMB & STRATEGIC TELEMETRY HEADER
+            ================================================================== */}
+        <header className="rank-header-bar">
+          <div className="rank-header-meta">
+            <div className="rank-protocol-tag">
+              <span className={`rank-pulse-dot ${allRequirementsMet ? "success" : ""}`} />
+              <span>SYS.EVAL // ASCENSION ENGINE</span>
+              <span>/</span>
+              <span>HUNTER ASCENSION PROTOCOL V2.4</span>
+              <span>/</span>
+              <span style={{ color: "var(--color-tertiary)" }}>
+                TIER {currentRank.tierOrder + 1}
+              </span>
             </div>
 
-            <div className="hero-rank-details">
-              <div className="rank-title-group">
-                <span className="rank-code-tag" style={{ color: currentRank.color, borderColor: currentRank.color }}>
-                  {currentRank.badgeLabel}
+            <div className="rank-header-title-row">
+              <h1 className="rank-main-title">
+                {allRequirementsMet ? "ASCENSION THRESHOLD REACHED" : "HUNTER ASCENSION EVALUATOR"}
+              </h1>
+              <span className="rank-authority-badge">
+                AUTHORITY TIER {currentRank.tierOrder + 1} OF 10
+              </span>
+            </div>
+
+            <p className="rank-header-description">
+              Ascension evaluates multi-dimensional protocol criteria beyond pure level gains. XP
+              drives personal Level; Rank dictates dimensional gate clearance and tactical
+              sovereignty.
+            </p>
+          </div>
+
+          {/* Right Telemetry Cluster */}
+          <div className="rank-telemetry-cluster">
+            {/* Player Level Gauge */}
+            <div className="rank-telemetry-tile">
+              <div className="rank-telemetry-tile-header">
+                <span>PLAYER LEVEL PROGRESS</span>
+                <span className="rank-level-val">
+                  LV {player.progress.level} ({levelPercent}%)
                 </span>
-                <span className="rank-tier-num">Tier {currentRank.tierOrder + 1} of 10</span>
               </div>
-              <h2 className="hero-rank-name" style={{ color: currentRank.color }}>
-                {currentRank.name}
-              </h2>
-              <p className="hero-rank-quote">"{currentRank.description}"</p>
+              <div className="rank-telemetry-bar-wrap">
+                <div
+                  className="rank-telemetry-bar-fill"
+                  style={{ width: `${levelPercent}%` }}
+                />
+              </div>
+              <span className="rank-telemetry-caption">
+                {currentLevelXP.toLocaleString()} / {reqLevelXP.toLocaleString()} XP
+              </span>
+            </div>
 
-              {/* Quick Stat Badges */}
-              <div className="hero-stat-chips">
-                <div className="stat-chip">
-                  <Sparkles size={14} />
-                  <span>{userStats.totalXP.toLocaleString()} Total XP</span>
-                </div>
-                <div className="stat-chip">
-                  <Swords size={14} />
-                  <span>{userStats.tasksCompleted} Quests Cleared</span>
-                </div>
-                <div className="stat-chip">
-                  <Flame size={14} />
-                  <span>{userStats.streak} Day Streak</span>
-                </div>
+            {/* Ascension Readiness Card */}
+            <div
+              className={`rank-readiness-card ${
+                allRequirementsMet ? "ascension-ready" : ""
+              }`}
+            >
+              <div className="rank-readiness-icon">
+                <Shield size={22} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span className="rank-readiness-label">
+                  {allRequirementsMet ? "ASCENSION READY" : "ASCENSION READINESS"}
+                </span>
+                <span className="rank-readiness-val">
+                  {nextRank
+                    ? allRequirementsMet
+                      ? "ALL CRITERIA SATISFIED"
+                      : `${satisfiedCriteria} OF ${totalCriteria} REQUIREMENTS MET`
+                    : "APEX TRANSCENDENCE"}
+                </span>
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Next Rank & Remaining Requirements Breakdown Card */}
-        <div
-          className="rank-hero-card next-rank-hero"
-          style={
-            {
-              "--card-accent": nextRank?.color ?? "#ffd700",
-              "--card-glow": nextRank?.glowColor ?? "rgba(255, 215, 0, 0.4)",
-            } as React.CSSProperties
-          }
-        >
-          <div className="card-top-tag">
-            <Target size={14} />
-            <span>{nextRank ? "NEXT ASCENSION TARGET" : "MAXIMUM RANK ACHIEVED"}</span>
-          </div>
-
-          {nextRank ? (
-            <div className="next-rank-content">
-              <div className="next-rank-header">
-                <div className="next-badge-preview">
-                  <RankBadge rankId={nextRank.id} size="md" interactive onClick={() => setSelectedRank(nextRank)} />
-                </div>
-                <div className="next-info-block">
-                  <div className="next-title-tag" style={{ color: nextRank.color }}>
-                    PROSPECT: {nextRank.badgeLabel}
-                  </div>
-                  <h3 className="next-rank-name">{nextRank.name}</h3>
-                </div>
-                <div className="next-overall-percent">
-                  <span className="percent-number">{overallPercent}%</span>
-                  <span className="percent-label">TOWARDS NEXT RANK</span>
-                </div>
+        {/* ==================================================================
+            2. HERO RANK ASCENSION STAGE (Convergence Bay)
+            ================================================================== */}
+        <section className="rank-hero-stage">
+          <div className="rank-hero-grid">
+            {/* CURRENT RANK (Left 5 Cols) */}
+            <div
+              className="rank-hero-bay"
+              style={
+                {
+                  "--card-accent": currentRank.color,
+                  "--card-glow": currentRank.glowColor,
+                } as React.CSSProperties
+              }
+            >
+              <div className="rank-bay-header">
+                <span className="rank-bay-tag">CURRENT EVALUATED STATUS</span>
+                <span className="rank-bay-protocol">
+                  PROTOCOL: {currentRank.titleTag.toUpperCase()}
+                </span>
               </div>
 
-              {/* Master Overall Progress Bar */}
-              <div className="master-progress-bar-container">
-                <div className="master-progress-track">
-                  <motion.div
-                    className="master-progress-fill"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${overallPercent}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ backgroundColor: nextRank.color }}
+              <div className="rank-bay-body">
+                <div className="rank-emblem-socket">
+                  <RankBadge
+                    rankId={currentRank.id}
+                    size="xl"
+                    interactive
+                    onClick={() => setSelectedRank(currentRank)}
                   />
+                  <span className="rank-emblem-badge-pill">ACTIVE</span>
+                </div>
+
+                <div className="rank-bay-info">
+                  <span className="rank-bay-category">RANK DESIGNATION</span>
+                  <h2 className="rank-bay-name">{currentRank.name}</h2>
+                  <div className="rank-bay-subgrid">
+                    <div className="rank-subgrid-cell">
+                      <span className="rank-subgrid-label">COMBAT POWER</span>
+                      <span className="rank-subgrid-val primary">
+                        {powerScore.toLocaleString()} CP
+                      </span>
+                    </div>
+                    <div className="rank-subgrid-cell">
+                      <span className="rank-subgrid-label">GATE CLEARANCE</span>
+                      <span className="rank-subgrid-val">
+                        TIER {currentRank.id}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Detailed Breakdown Checklist: Remaining Tasks & Points */}
-              <div className="remaining-goals-list">
-                <div className="remaining-goal-item">
-                  <div className="goal-icon-wrapper">
-                    <Sparkles size={14} style={{ color: nextRank.color }} />
+              <div className="rank-bay-footer">
+                <span className="rank-insignia-text">
+                  <Award size={14} style={{ color: "var(--color-tertiary)" }} />
+                  Insignia: {currentRank.badgeLabel}
+                </span>
+                <span style={{ fontFamily: "monospace", color: "var(--color-tertiary)" }}>
+                  STABLE RESONANCE
+                </span>
+              </div>
+            </div>
+
+            {/* CONVERGENCE VECTOR (Center 2 Cols) */}
+            {nextRank ? (
+              <div className="rank-convergence-bay">
+                <div className="rank-convergence-badge">
+                  <span
+                    className="rank-pulse-dot"
+                    style={{
+                      backgroundColor: allRequirementsMet
+                        ? "var(--color-success)"
+                        : "var(--color-primary)",
+                    }}
+                  />
+                  <span>CONVERGENCE</span>
+                </div>
+
+                <div className="rank-convergence-track">
+                  <div className="rank-convergence-line" />
+                  <div className="rank-convergence-node">
+                    <ArrowRight size={18} />
                   </div>
-                  <div className="goal-text">
-                    <span className="goal-label">XP Requirement</span>
-                    <span className="goal-values">
-                      {userStats.totalXP.toLocaleString()} / {nextRank.requiredXP.toLocaleString()} XP
-                    </span>
-                  </div>
-                  <span className={`goal-status ${xpRemaining === 0 ? "done" : "needed"}`}>
-                    {xpRemaining === 0 ? "READY" : `-${xpRemaining.toLocaleString()} XP`}
+                </div>
+
+                <span className="rank-convergence-percent">{overallPercent}%</span>
+                <span className="rank-convergence-caption">
+                  {satisfiedCriteria} / {totalCriteria} CRITERIA
+                </span>
+                <span
+                  className={`rank-convergence-pill ${
+                    allRequirementsMet ? "ready" : ""
+                  }`}
+                >
+                  {allRequirementsMet
+                    ? "READY TO ASCEND"
+                    : `${totalCriteria - satisfiedCriteria} PENDING`}
+                </span>
+              </div>
+            ) : (
+              <div className="rank-convergence-bay">
+                <Sparkles size={28} style={{ color: "var(--color-tertiary)" }} />
+                <span className="rank-convergence-percent">100%</span>
+                <span className="rank-convergence-caption">ZENITH REACHED</span>
+              </div>
+            )}
+
+            {/* TARGET NEXT RANK (Right 5 Cols) */}
+            {nextRank ? (
+              <div
+                className="rank-hero-bay target-bay"
+                style={
+                  {
+                    "--card-accent": nextRank.color,
+                    "--card-glow": nextRank.glowColor,
+                  } as React.CSSProperties
+                }
+              >
+                <div className="rank-bay-header">
+                  <span className="rank-bay-tag target">
+                    <Target size={12} style={{ display: "inline", marginRight: 4 }} />
+                    TARGET ASCENSION GOAL
+                  </span>
+                  <span className="rank-bay-protocol">
+                    PROTOCOL: {nextRank.titleTag.toUpperCase()}
                   </span>
                 </div>
 
-                <div className="remaining-goal-item">
-                  <div className="goal-icon-wrapper">
-                    <Swords size={14} style={{ color: nextRank.color }} />
-                  </div>
-                  <div className="goal-text">
-                    <span className="goal-label">Tasks / Quests Completed</span>
-                    <span className="goal-values">
-                      {userStats.tasksCompleted} / {nextRank.requiredTasks} Quests
+                <div className="rank-bay-body">
+                  <div className="rank-emblem-socket">
+                    <RankBadge
+                      rankId={nextRank.id}
+                      size="xl"
+                      interactive
+                      onClick={() => setSelectedRank(nextRank)}
+                    />
+                    <span className="rank-emblem-badge-pill target">
+                      {allRequirementsMet ? "UNSEALED" : "NEXT TIER"}
                     </span>
                   </div>
-                  <span className={`goal-status ${tasksRemaining === 0 ? "done" : "needed"}`}>
-                    {tasksRemaining === 0 ? "READY" : `-${tasksRemaining} Tasks`}
-                  </span>
-                </div>
 
-                <div className="remaining-goal-item">
-                  <div className="goal-icon-wrapper">
-                    <Flame size={14} style={{ color: nextRank.color }} />
-                  </div>
-                  <div className="goal-text">
-                    <span className="goal-label">Streak Discipline</span>
-                    <span className="goal-values">
-                      {Math.max(userStats.streak, userStats.bestStreak ?? 0)} / {nextRank.requiredStreak} Days
+                  <div className="rank-bay-info">
+                    <span className="rank-bay-category" style={{ color: "var(--color-tertiary-text)" }}>
+                      NEXT HORIZON
                     </span>
-                  </div>
-                  <span className={`goal-status ${streakRemaining === 0 ? "done" : "needed"}`}>
-                    {streakRemaining === 0 ? "READY" : `-${streakRemaining} Days`}
-                  </span>
-                </div>
-
-                {nextRank.specialConditionText && (
-                  <div className="remaining-goal-item">
-                    <div className="goal-icon-wrapper">
-                      <Zap size={14} style={{ color: nextRank.color }} />
+                    <h2 className="rank-bay-name">{nextRank.name}</h2>
+                    <div className="rank-bay-subgrid">
+                      <div className="rank-subgrid-cell">
+                        <span className="rank-subgrid-label">REQUIRED XP</span>
+                        <span className="rank-subgrid-val tertiary">
+                          {nextRank.requiredXP.toLocaleString()} XP
+                        </span>
+                      </div>
+                      <div className="rank-subgrid-cell">
+                        <span className="rank-subgrid-label">TARGET CLEARANCE</span>
+                        <span className="rank-subgrid-val">
+                          TIER {nextRank.id}
+                        </span>
+                      </div>
                     </div>
-                    <div className="goal-text">
-                      <span className="goal-label">Special Milestone</span>
-                      <span className="goal-values">{nextRank.specialConditionText}</span>
+                  </div>
+                </div>
+
+                <div className="rank-bay-footer">
+                  <span className="rank-insignia-text" style={{ color: "var(--color-tertiary-text)" }}>
+                    <Sparkles size={14} />
+                    {nextRank.perks[0] || "Privilege Access Expansion"}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontWeight: 700,
+                      color: allRequirementsMet ? "var(--color-success)" : "var(--color-primary)",
+                    }}
+                  >
+                    {allRequirementsMet
+                      ? "READY TO ASCEND"
+                      : `${totalCriteria - satisfiedCriteria} TASKS REMAINING`}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="rank-hero-bay target-bay">
+                <div className="rank-apex-celebration">
+                  <Sparkles size={36} style={{ color: "var(--color-tertiary)" }} />
+                  <h3>APEX TRANSCENDENCE</h3>
+                  <p>
+                    You have conquered all 10 ranks. You reign at the absolute summit of human
+                    willpower and discipline.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ==================================================================
+            3. REQUIREMENTS MATRIX & ACTIONABLE DOSSIER (8 / 4 BENTO GRID)
+            ================================================================== */}
+        {nextRank && (
+          <section className="rank-matrix-grid">
+            {/* 8-Column Criteria Matrix */}
+            <div className="rank-criteria-bay">
+              <div className="rank-section-header">
+                <div className="rank-section-title-group">
+                  <Target size={18} style={{ color: "var(--color-primary)" }} />
+                  <h3>ASCENSION CRITERIA MATRIX</h3>
+                </div>
+                <span className="rank-section-cycle">
+                  EVALUATION CYCLE #{player.progress.level * 10 + currentRank.tierOrder}
+                </span>
+              </div>
+
+              <div className="rank-criteria-cards-grid">
+                {/* 1. Total XP Threshold */}
+                {(() => {
+                  const xpPassed = userStats.totalXP >= nextRank.requiredXP;
+                  const xpPct = Math.min(
+                    100,
+                    Math.floor((userStats.totalXP / Math.max(1, nextRank.requiredXP)) * 100)
+                  );
+                  return (
+                    <div className={`rank-criteria-card ${xpPassed ? "satisfied" : ""}`}>
+                      <div className="rank-criteria-card-header">
+                        <div>
+                          <div className="rank-criteria-lead">
+                            <span className="rank-criteria-lead-icon">
+                              <Sparkles size={16} />
+                            </span>
+                            <span className="rank-criteria-label">Total XP Threshold</span>
+                          </div>
+                          <div className="rank-criteria-desc">
+                            Resonance acquired via daily directives & core habits.
+                          </div>
+                        </div>
+                        <span
+                          className={`rank-criteria-status-badge ${
+                            xpPassed ? "satisfied" : "pending"
+                          }`}
+                        >
+                          {xpPassed ? (
+                            <>
+                              <Check size={12} /> SATISFIED
+                            </>
+                          ) : (
+                            `${xpPct}% PENDING`
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rank-criteria-progress-section">
+                        <div className="rank-criteria-numbers">
+                          <span className="rank-criteria-current-req">
+                            {userStats.totalXP.toLocaleString()} / {nextRank.requiredXP.toLocaleString()} XP
+                          </span>
+                          <span
+                            className={`rank-criteria-delta ${xpPassed ? "satisfied" : ""}`}
+                          >
+                            {xpPassed
+                              ? `+${(userStats.totalXP - nextRank.requiredXP).toLocaleString()} SURPLUS`
+                              : `-${xpRemaining.toLocaleString()} XP NEEDED`}
+                          </span>
+                        </div>
+                        <div className="rank-criteria-bar-track">
+                          <div
+                            className={`rank-criteria-bar-fill ${xpPassed ? "satisfied" : ""}`}
+                            style={{ width: `${xpPct}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
+                  );
+                })()}
+
+                {/* 2. Completed Quests */}
+                {(() => {
+                  const taskPassed = userStats.tasksCompleted >= nextRank.requiredTasks;
+                  const taskPct = Math.min(
+                    100,
+                    Math.floor(
+                      (userStats.tasksCompleted / Math.max(1, nextRank.requiredTasks)) * 100
+                    )
+                  );
+                  return (
+                    <div className={`rank-criteria-card ${taskPassed ? "satisfied" : ""}`}>
+                      <div className="rank-criteria-card-header">
+                        <div>
+                          <div className="rank-criteria-lead">
+                            <span className="rank-criteria-lead-icon">
+                              <Swords size={16} />
+                            </span>
+                            <span className="rank-criteria-label">Habit Directives Cleared</span>
+                          </div>
+                          <div className="rank-criteria-desc">
+                            Execution of assigned daily missions and guild bounties.
+                          </div>
+                        </div>
+                        <span
+                          className={`rank-criteria-status-badge ${
+                            taskPassed ? "satisfied" : "pending"
+                          }`}
+                        >
+                          {taskPassed ? (
+                            <>
+                              <Check size={12} /> SATISFIED
+                            </>
+                          ) : (
+                            `${taskPct}% PENDING`
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rank-criteria-progress-section">
+                        <div className="rank-criteria-numbers">
+                          <span className="rank-criteria-current-req">
+                            {userStats.tasksCompleted} / {nextRank.requiredTasks} Quests
+                          </span>
+                          <span
+                            className={`rank-criteria-delta ${taskPassed ? "satisfied" : ""}`}
+                          >
+                            {taskPassed
+                              ? `+${userStats.tasksCompleted - nextRank.requiredTasks} SURPLUS`
+                              : `-${tasksRemaining} QUESTS NEEDED`}
+                          </span>
+                        </div>
+                        <div className="rank-criteria-bar-track">
+                          <div
+                            className={`rank-criteria-bar-fill ${taskPassed ? "satisfied" : ""}`}
+                            style={{ width: `${taskPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. Continuity Streak */}
+                {(() => {
+                  const effectiveStreak = Math.max(userStats.streak, userStats.bestStreak ?? 0);
+                  const streakPassed = effectiveStreak >= nextRank.requiredStreak;
+                  const streakPct =
+                    nextRank.requiredStreak === 0
+                      ? 100
+                      : Math.min(
+                          100,
+                          Math.floor((effectiveStreak / nextRank.requiredStreak) * 100)
+                        );
+                  return (
+                    <div className={`rank-criteria-card ${streakPassed ? "satisfied" : ""}`}>
+                      <div className="rank-criteria-card-header">
+                        <div>
+                          <div className="rank-criteria-lead">
+                            <span className="rank-criteria-lead-icon">
+                              <Flame size={16} />
+                            </span>
+                            <span className="rank-criteria-label">Discipline Continuity</span>
+                          </div>
+                          <div className="rank-criteria-desc">
+                            Unbroken habit execution cycle to confirm mental fortitude.
+                          </div>
+                        </div>
+                        <span
+                          className={`rank-criteria-status-badge ${
+                            streakPassed ? "satisfied" : "pending"
+                          }`}
+                        >
+                          {streakPassed ? (
+                            <>
+                              <Check size={12} /> SATISFIED
+                            </>
+                          ) : (
+                            `${streakPct}% PENDING`
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="rank-criteria-progress-section">
+                        <div className="rank-criteria-numbers">
+                          <span className="rank-criteria-current-req">
+                            {effectiveStreak} / {nextRank.requiredStreak} Days Active
+                          </span>
+                          <span
+                            className={`rank-criteria-delta ${streakPassed ? "satisfied" : ""}`}
+                          >
+                            {streakPassed
+                              ? "STREAK SECURED"
+                              : `-${streakRemaining} DAYS NEEDED`}
+                          </span>
+                        </div>
+                        <div className="rank-criteria-bar-track">
+                          <div
+                            className={`rank-criteria-bar-fill ${streakPassed ? "satisfied" : ""}`}
+                            style={{ width: `${streakPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 4. Special Directive or Benchmark */}
+                {(() => {
+                  if (nextRank.specialConditionText) {
+                    const specialPassed = checkSpecialCondition(
+                      nextRank.specialConditionKey,
+                      userStats.stats,
+                      userStats.bossesSlain
+                    );
+                    return (
+                      <div className={`rank-criteria-card ${specialPassed ? "satisfied" : ""}`}>
+                        <div className="rank-criteria-card-header">
+                          <div>
+                            <div className="rank-criteria-lead">
+                              <span className="rank-criteria-lead-icon">
+                                <Zap size={16} />
+                              </span>
+                              <span className="rank-criteria-label">Special Milestone</span>
+                            </div>
+                            <div className="rank-criteria-desc">
+                              {nextRank.specialConditionText}
+                            </div>
+                          </div>
+                          <span
+                            className={`rank-criteria-status-badge ${
+                              specialPassed ? "satisfied" : "pending"
+                            }`}
+                          >
+                            {specialPassed ? (
+                              <>
+                                <Check size={12} /> SATISFIED
+                              </>
+                            ) : (
+                              "REQUIRED"
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="rank-criteria-progress-section">
+                          <div className="rank-criteria-numbers">
+                            <span className="rank-criteria-current-req">
+                              Special Evaluation Status
+                            </span>
+                            <span
+                              className={`rank-criteria-delta ${
+                                specialPassed ? "satisfied" : ""
+                              }`}
+                            >
+                              {specialPassed ? "VERIFIED" : "INCOMPLETE"}
+                            </span>
+                          </div>
+                          <div className="rank-criteria-bar-track">
+                            <div
+                              className={`rank-criteria-bar-fill ${
+                                specialPassed ? "satisfied" : ""
+                              }`}
+                              style={{ width: specialPassed ? "100%" : "25%" }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Default 4th card: Core Attribute Caliber baseline
+                  return (
+                    <div className="rank-criteria-card satisfied">
+                      <div className="rank-criteria-card-header">
+                        <div>
+                          <div className="rank-criteria-lead">
+                            <span className="rank-criteria-lead-icon">
+                              <Activity size={16} />
+                            </span>
+                            <span className="rank-criteria-label">Hunter Caliber Baseline</span>
+                          </div>
+                          <div className="rank-criteria-desc">
+                            Core attributes support standard operational clearance.
+                          </div>
+                        </div>
+                        <span className="rank-criteria-status-badge satisfied">
+                          <Check size={12} /> SATISFIED
+                        </span>
+                      </div>
+
+                      <div className="rank-criteria-progress-section">
+                        <div className="rank-criteria-numbers">
+                          <span className="rank-criteria-current-req">
+                            Dominant: {highestStat[0].toUpperCase()} ({highestStat[1]} Pts)
+                          </span>
+                          <span className="rank-criteria-delta satisfied">CAPABLE</span>
+                        </div>
+                        <div className="rank-criteria-bar-track">
+                          <div
+                            className="rank-criteria-bar-fill satisfied"
+                            style={{ width: "100%" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Attribute Benchmark Telemetry Strip */}
+              <div className="rank-benchmark-strip">
+                <div className="rank-benchmark-lead">
+                  <div className="rank-benchmark-icon-box">
+                    <Activity size={22} />
+                  </div>
+                  <div>
+                    <div className="rank-benchmark-title">ATTRIBUTE BENCHMARK BREAKDOWN</div>
+                    <div className="rank-benchmark-subtitle">
+                      Real-time calibrated attributes powering combat and discipline performance.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rank-benchmark-chips">
+                  {statEntries.map(([name, val]) => (
                     <span
-                      className={`goal-status ${
-                        checkSpecialCondition(nextRank.specialConditionKey, userStats.stats, userStats.bossesSlain)
-                          ? "done"
-                          : "needed"
+                      key={name}
+                      className={`rank-benchmark-chip ${
+                        name === highestStat[0] ? "highlight" : ""
                       }`}
                     >
-                      {checkSpecialCondition(nextRank.specialConditionKey, userStats.stats, userStats.bossesSlain)
-                        ? "READY"
-                        : "INCOMPLETE"}
+                      {name.toUpperCase().slice(0, 3)}: {val}
                     </span>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="max-rank-celebration">
-              <Sparkles size={32} style={{ color: "#ffd700" }} />
-              <h3>APEX TRANSCENDENCE</h3>
-              <p>You have conquered all 10 ranks. You reign at the absolute summit of human willpower.</p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Interactive Progression Roadmap */}
-      <section className="rank-roadmap-section">
-        <div className="section-header-banner">
-          <div className="header-left">
-            <Award size={20} className="header-icon" />
-            <div>
-              <h2>HUNTER ASCENSION ROADMAP</h2>
-              <p>Click on any rank to inspect its exact multivariable requirements, lore, and unlockable perks.</p>
+            {/* 4-Column "What You Still Need" Actionable Dossier */}
+            <div className="rank-dossier-bay">
+              <div className="rank-dossier-header">
+                <div className="rank-dossier-title">
+                  <Target size={18} style={{ color: "var(--color-primary)" }} />
+                  <span>ASCENSION DOSSIER</span>
+                </div>
+                <span className="rank-dossier-tag">
+                  {allRequirementsMet ? "ALL CLEAR" : "FINAL GAPS"}
+                </span>
+              </div>
+
+              <div className="rank-dossier-body">
+                <span className="rank-dossier-subtitle">
+                  {allRequirementsMet ? "GATE STATUS: UNSEALED" : "OUTSTANDING REQUIREMENTS"}
+                </span>
+
+                {allRequirementsMet ? (
+                  <div className="rank-all-satisfied-card">
+                    <CheckCircle2 size={32} style={{ color: "var(--color-success)" }} />
+                    <h4>ASCENSION THRESHOLD REACHED</h4>
+                    <p>
+                      All multi-variable parameters for Rank {nextRank.badgeLabel} are 100%
+                      fulfilled. Containment lattice deactivated.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {xpRemaining > 0 && (
+                      <div className="rank-gap-item">
+                        <Sparkles size={16} className="rank-gap-icon" />
+                        <div className="rank-gap-content">
+                          <span className="rank-gap-title">
+                            +{xpRemaining.toLocaleString()} XP Needed
+                          </span>
+                          <span className="rank-gap-hint">
+                            Complete daily directives or conquer arena bounties to gain XP.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {tasksRemaining > 0 && (
+                      <div className="rank-gap-item">
+                        <Swords size={16} className="rank-gap-icon" />
+                        <div className="rank-gap-content">
+                          <span className="rank-gap-title">
+                            +{tasksRemaining} Quests Needed
+                          </span>
+                          <span className="rank-gap-hint">
+                            Execute habit directives on the Mission Board.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {streakRemaining > 0 && (
+                      <div className="rank-gap-item">
+                        <Flame size={16} className="rank-gap-icon" />
+                        <div className="rank-gap-content">
+                          <span className="rank-gap-title">
+                            +{streakRemaining} Days Active Streak
+                          </span>
+                          <span className="rank-gap-hint">
+                            Check in consecutive days without breaking continuity.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {specialRemainingText && (
+                      <div className="rank-gap-item">
+                        <Zap size={16} className="rank-gap-icon" />
+                        <div className="rank-gap-content">
+                          <span className="rank-gap-title">Special Directive</span>
+                          <span className="rank-gap-hint">{specialRemainingText}</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="rank-dossier-actions">
+                <Link to="/quests" style={{ textDecoration: "none" }}>
+                  <button type="button" className="rank-dossier-btn-primary">
+                    <Swords size={16} />
+                    <span>DEPLOY DIRECTIVES</span>
+                  </button>
+                </Link>
+                <button
+                  type="button"
+                  className="rank-dossier-btn-secondary"
+                  onClick={() => setSelectedRank(nextRank)}
+                >
+                  INSPECT TARGET RANK SPECS
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ==================================================================
+            4. NEXT RANK UNLOCK PRIVILEGES & SPOILS (4-BAY GRID)
+            ================================================================== */}
+        {nextRank && (
+          <section className="rank-unlocks-bay">
+            <div className="rank-section-header">
+              <div className="rank-section-title-group">
+                <Award size={18} style={{ color: "var(--color-tertiary)" }} />
+                <h3>{nextRank.badgeLabel} UNLOCK PRIVILEGES & SPOILS</h3>
+              </div>
+              <span className="rank-section-cycle">UNLOCKED UPON ASCENSION</span>
+            </div>
+
+            <div className="rank-unlocks-grid">
+              {nextRank.perks.map((perk, index) => {
+                const perkIcons = [Swords, TrendingUp, Shield, Award];
+                const IconComponent = perkIcons[index % perkIcons.length];
+                return (
+                  <div key={index} className="rank-perk-card">
+                    <div className="rank-perk-header">
+                      <div className="rank-perk-icon-box">
+                        <IconComponent size={18} />
+                      </div>
+                      <div className="rank-perk-title-group">
+                        <span className="rank-perk-category">PRIVILEGE TIER</span>
+                        <span className="rank-perk-name">{perk}</span>
+                      </div>
+                    </div>
+                    <p className="rank-perk-desc">
+                      Official Hunter Association authorization upgrade granted upon confirming
+                      advancement to {nextRank.name}.
+                    </p>
+                    <span className="rank-perk-badge">+ AUTHORIZED BUFF</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* ==================================================================
+            5. CANONICAL 10-RANK ASCENSION ROADMAP (LADDER)
+            ================================================================== */}
+        <section className="rank-ladder-section">
+          <div className="rank-section-header">
+            <div className="rank-section-title-group">
+              <TrendingUp size={18} style={{ color: "var(--color-primary)" }} />
+              <h3>CANONICAL ASCENSION HIERARCHY</h3>
+            </div>
+
+            <div className="rank-ladder-legend">
+              <span className="rank-legend-item">
+                <span className="rank-legend-dot completed" /> Cleared
+              </span>
+              <span className="rank-legend-item">
+                <span className="rank-legend-dot current" /> Current
+              </span>
+              <span className="rank-legend-item">
+                <span className="rank-legend-dot locked" /> Locked
+              </span>
             </div>
           </div>
-          <div className="header-legend">
-            <span className="legend-item"><span className="legend-dot completed" /> Unlocked</span>
-            <span className="legend-item"><span className="legend-dot current" /> Current</span>
-            <span className="legend-item"><span className="legend-dot locked" /> Locked</span>
-          </div>
-        </div>
 
-        <div className="progression-path-container">
-          <div className="progression-path-line" />
-
-          <div className="progression-nodes-list">
+          <div className="rank-ladder-grid">
             {RANK_DEFINITIONS.map((rankDef, index) => {
               const isCurrent = rankDef.id === currentRankId;
               const isPast = rankDef.tierOrder < currentRank.tierOrder;
               const isNext = rankDef.tierOrder === currentRank.tierOrder + 1;
 
-              // Calculate how close user is to this rank's individual requirements
               const effectiveStreak = Math.max(userStats.streak, userStats.bestStreak ?? 0);
               const xpMet = userStats.totalXP >= rankDef.requiredXP;
               const taskMet = userStats.tasksCompleted >= rankDef.requiredTasks;
@@ -291,27 +897,17 @@ export const RankProgression: React.FC<RankProgressionProps> = ({
               );
               const allMet = xpMet && taskMet && streakMet && specialMet;
 
-              let nodeStatusText = "Locked";
-              let nodeStatusClass = "locked";
-              if (isCurrent) {
-                nodeStatusText = "Current Rank";
-                nodeStatusClass = "current";
-              } else if (isPast) {
-                nodeStatusText = "Unlocked";
-                nodeStatusClass = "unlocked";
-              } else if (isNext) {
-                nodeStatusText = allMet ? "Ready to Ascend" : "Next Objective";
-                nodeStatusClass = "in-progress";
-              }
+              let statusClass = "locked";
+              if (isCurrent) statusClass = "active-node";
+              else if (isPast) statusClass = "unlocked";
 
               return (
                 <motion.div
                   key={rankDef.id}
-                  className={`progression-node-card ${nodeStatusClass} ${isCurrent ? "active-node" : ""}`}
+                  className={`rank-node-card ${statusClass}`}
                   onClick={() => setSelectedRank(rankDef)}
-                  whileHover={{ y: -4 }}
+                  whileHover={{ y: -3 }}
                   transition={{ duration: 0.18 }}
-                  title={`${rankDef.name} — Status: ${nodeStatusText}`}
                   style={
                     {
                       "--node-accent": rankDef.color,
@@ -319,148 +915,143 @@ export const RankProgression: React.FC<RankProgressionProps> = ({
                     } as React.CSSProperties
                   }
                 >
-                  {/* Status Indicator Pill */}
-                  <div className="node-status-pill">
+                  <div className="rank-node-status-pill">
                     {isCurrent ? (
-                      <span className="status-badge current">CURRENT</span>
+                      <span className="rank-node-badge current">YOU</span>
                     ) : isPast ? (
-                      <span className="status-badge completed">
-                        <CheckCircle2 size={11} /> DONE
+                      <span className="rank-node-badge completed">
+                        <Check size={10} /> DONE
                       </span>
                     ) : isNext && allMet ? (
-                      <span className="status-badge ready" style={{ background: "#2ed573", color: "#000" }}>
-                        READY
-                      </span>
+                      <span className="rank-node-badge ready">READY</span>
                     ) : (
-                      <span className="status-badge locked">
-                        <Lock size={11} /> TIER {index + 1}
+                      <span className="rank-node-badge locked">
+                        <Lock size={10} /> T{index + 1}
                       </span>
                     )}
                   </div>
 
-
-
-                  {/* Badge Crest */}
-                  <div className="node-badge-slot">
-                    <RankBadge rankId={rankDef.id} size="md" />
+                  <div className="rank-node-crest-slot">
+                    <RankBadge rankId={rankDef.id} size="sm" />
                   </div>
 
-                  {/* Rank Title & Label */}
-                  <div className="node-title-group">
-                    <div className="node-rank-code" style={{ color: rankDef.color }}>
-                      {rankDef.badgeLabel}
-                    </div>
-                    <div className="node-rank-name">{rankDef.name}</div>
-                  </div>
+                  <span className="rank-node-symbol" style={{ color: rankDef.color }}>
+                    {rankDef.id}
+                  </span>
+                  <span className="rank-node-name">{rankDef.name}</span>
 
-                  {/* Requirements Summary Preview */}
-                  <div className="node-req-preview">
-                    <div className={`preview-item ${xpMet ? "done" : ""}`}>
+                  <div className="rank-node-req-preview">
+                    <div className={`rank-node-preview-item ${xpMet ? "done" : ""}`}>
                       <span>XP:</span>
                       <strong>{rankDef.requiredXP.toLocaleString()}</strong>
                     </div>
-                    <div className={`preview-item ${taskMet ? "done" : ""}`}>
-                      <span>Tasks:</span>
+                    <div className={`rank-node-preview-item ${taskMet ? "done" : ""}`}>
+                      <span>Quests:</span>
                       <strong>{rankDef.requiredTasks}</strong>
                     </div>
-                    <div className={`preview-item ${streakMet ? "done" : ""}`}>
+                    <div className={`rank-node-preview-item ${streakMet ? "done" : ""}`}>
                       <span>Streak:</span>
                       <strong>{rankDef.requiredStreak}d</strong>
                     </div>
-                    {rankDef.specialConditionText && (
-                      <div className={`preview-item special ${specialMet ? "done" : ""}`}>
-                        <span>Special:</span>
-                        <strong>{rankDef.specialConditionText}</strong>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Node Bottom Action */}
-                  <div className="node-inspect-cta">
-                    <span>Inspect Requirements</span>
-                    <ChevronRight size={13} />
+                  <div className="rank-node-cta">
+                    <span>Inspect</span>
+                    <ChevronRight size={12} />
                   </div>
                 </motion.div>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Ranks Codex & Perks Table */}
-      <section className="rank-codex-section">
-        <div className="codex-header">
-          <Info size={18} />
-          <h3>HUNTER ASSOCIATION RANK CODEX</h3>
-        </div>
+        {/* ==================================================================
+            6. HUNTER ASSOCIATION RANK CODEX & PERKS TABLE
+            ================================================================== */}
+        <section className="rank-codex-section">
+          <div className="rank-section-header">
+            <div className="rank-section-title-group">
+              <Info size={18} style={{ color: "var(--color-primary)" }} />
+              <h3>HUNTER ASSOCIATION RANK CODEX</h3>
+            </div>
+            <span className="rank-section-cycle">TAP ANY ROW TO INSPECT</span>
+          </div>
 
-        <div className="codex-table-wrapper">
-          <table className="codex-table">
-            <thead>
-              <tr>
-                <th>Tier</th>
-                <th>Rank</th>
-                <th>Designation</th>
-                <th>Required XP</th>
-                <th>Required Tasks</th>
-                <th>Required Streak</th>
-                <th>Special Directives</th>
-                <th>Prestige Perks & Buffs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {RANK_DEFINITIONS.map((r, i) => {
-                const isUserRank = r.id === currentRankId;
-                return (
-                  <tr
-                    key={r.id}
-                    className={`codex-row ${isUserRank ? "active-row" : ""}`}
-                    onClick={() => setSelectedRank(r)}
-                  >
-                    <td>
-                      <span className="tier-pill">Tier {i + 1}</span>
-                    </td>
-                    <td>
-                      <div className="codex-rank-col">
-                        <RankBadge rankId={r.id} size="xs" />
-                        <span className="codex-rank-label" style={{ color: r.color }}>
-                          {r.badgeLabel}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="codex-name-cell">{r.name}</td>
-                    <td>{r.requiredXP.toLocaleString()} XP</td>
-                    <td>{r.requiredTasks} Quests</td>
-                    <td>{r.requiredStreak} Days</td>
-                    <td>{r.specialConditionText || "—"}</td>
-                    <td>
-                      <div className="codex-perks-chips">
-                        {r.perks.slice(0, 2).map((p, idx) => (
-                          <span key={idx} className="perk-chip">
-                            {p}
+          <div className="rank-codex-table-wrap">
+            <table className="rank-codex-table">
+              <thead>
+                <tr>
+                  <th>Tier</th>
+                  <th>Rank</th>
+                  <th>Designation</th>
+                  <th>Required XP</th>
+                  <th>Quests</th>
+                  <th>Streak</th>
+                  <th>Special Directive</th>
+                  <th>Prestige Privileges</th>
+                </tr>
+              </thead>
+              <tbody>
+                {RANK_DEFINITIONS.map((r, i) => {
+                  const isUserRank = r.id === currentRankId;
+                  return (
+                    <tr
+                      key={r.id}
+                      className={`rank-codex-row ${isUserRank ? "active-row" : ""}`}
+                      onClick={() => setSelectedRank(r)}
+                    >
+                      <td>
+                        <span className="rank-tier-pill">Tier {i + 1}</span>
+                      </td>
+                      <td>
+                        <div className="rank-codex-badge-cell">
+                          <RankBadge rankId={r.id} size="xs" />
+                          <span style={{ fontWeight: 800, color: r.color }}>
+                            {r.badgeLabel}
                           </span>
-                        ))}
-                        {r.perks.length > 2 && (
-                          <span className="perk-chip more">+{r.perks.length - 2} more</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 700, color: "#fff" }}>{r.name}</td>
+                      <td>{r.requiredXP.toLocaleString()} XP</td>
+                      <td>{r.requiredTasks} Quests</td>
+                      <td>{r.requiredStreak} Days</td>
+                      <td>{r.specialConditionText || "—"}</td>
+                      <td>
+                        <div>
+                          {r.perks.slice(0, 2).map((p, idx) => (
+                            <span key={idx} className="rank-codex-perk-chip">
+                              {p}
+                            </span>
+                          ))}
+                          {r.perks.length > 2 && (
+                            <span
+                              className="rank-codex-perk-chip"
+                              style={{ color: "var(--color-primary)" }}
+                            >
+                              +{r.perks.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      {/* Rank Inspector Modal */}
-      <RankInspectorModal
-        rank={selectedRank}
-        isOpen={selectedRank !== null}
-        onClose={() => setSelectedRank(null)}
-        currentRankId={currentRankId}
-        userStats={userStats}
-      />
+        {/* ==================================================================
+            7. RANK INSPECTOR MODAL
+            ================================================================== */}
+        <RankInspectorModal
+          rank={selectedRank}
+          isOpen={selectedRank !== null}
+          onClose={() => setSelectedRank(null)}
+          currentRankId={currentRankId}
+          userStats={userStats}
+        />
+      </div>
     </div>
   );
 };
