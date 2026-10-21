@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase, isNetworkOrMockError } from "./supabase";
 import { getItemById, type ItemDefinition } from "../data/items";
 
 export interface PlayerInventoryItem {
@@ -43,7 +43,11 @@ export async function fetchPlayerInventory(userId: string): Promise<PlayerInvent
       .eq("user_id", userId)
       .order("acquired_at", { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      if (!isNetworkOrMockError(error)) {
+        console.error("Supabase fetchPlayerInventory error:", error);
+      }
+    } else if (data) {
       const items: PlayerInventoryItem[] = data.map((row) => ({
         id: row.id,
         userId: row.user_id,
@@ -56,8 +60,10 @@ export async function fetchPlayerInventory(userId: string): Promise<PlayerInvent
       setCachedInventory(userId, items);
       return items;
     }
-  } catch {
-    // safe fallback
+  } catch (err) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("Supabase fetchPlayerInventory exception:", err);
+    }
   }
 
   // Fallback to cached items
@@ -85,26 +91,55 @@ export async function addItemToInventory(
 
   try {
     // Check if player already owns row
-    const { data } = await supabase
+    const { data, error: selectError } = await supabase
       .from("player_inventory")
       .select("*")
       .eq("user_id", userId)
       .eq("item_id", itemId)
       .maybeSingle();
 
+    if (selectError && !isNetworkOrMockError(selectError)) {
+      console.error("Supabase select player_inventory error:", selectError);
+      return { success: false, error: selectError.message || "Database error selecting inventory" };
+    }
+
     if (data) {
       const newQty = Math.min(definition.maxStack, data.quantity + addCount);
-      await supabase
+      const { error: updateError } = await supabase
         .from("player_inventory")
         .update({ quantity: newQty })
         .eq("id", data.id);
-    } else {
-      await supabase.from("player_inventory").insert({
+
+      if (updateError && !isNetworkOrMockError(updateError)) {
+        console.error("Supabase update player_inventory error:", updateError);
+        return { success: false, error: updateError.message || "Database error updating inventory" };
+      }
+    } else if (!selectError) {
+      const { error: insertError } = await supabase.from("player_inventory").insert({
         id,
         user_id: userId,
         item_id: itemId,
         quantity: addCount,
       });
+
+      if (insertError) {
+        if (insertError.code === "23505") {
+          // Concurrently inserted row; idempotent update
+          const { data: retryData } = await supabase
+            .from("player_inventory")
+            .select("id, quantity")
+            .eq("user_id", userId)
+            .eq("item_id", itemId)
+            .maybeSingle();
+          if (retryData) {
+            const newQty = Math.min(definition.maxStack, retryData.quantity + addCount);
+            await supabase.from("player_inventory").update({ quantity: newQty }).eq("id", retryData.id);
+          }
+        } else if (!isNetworkOrMockError(insertError)) {
+          console.error("Supabase insert player_inventory error:", insertError);
+          return { success: false, error: insertError.message || "Database error inserting inventory" };
+        }
+      }
     }
 
     // Update local cache synchronously
@@ -130,8 +165,13 @@ export async function addItemToInventory(
     setCachedInventory(userId, updatedList);
 
     return { success: true };
-  } catch {
-    // Even if Supabase is offline, preserve cached inventory
+  } catch (err: any) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("addItemToInventory unexpected exception:", err);
+      return { success: false, error: err?.message || "Unexpected inventory persistence error" };
+    }
+
+    // Offline / Mock fallback: preserve cached inventory
     const cached = getCachedInventory(userId);
     const existing = cached.find((i) => i.itemId === itemId);
     let updatedList: PlayerInventoryItem[];
@@ -165,32 +205,74 @@ export async function removeItemFromInventory(
   amount: number = 1
 ): Promise<boolean> {
   try {
-    const { data } = await supabase
+    const { data, error: selectError } = await supabase
       .from("player_inventory")
       .select("*")
       .eq("user_id", userId)
       .eq("item_id", itemId)
       .maybeSingle();
 
-    if (!data) return false;
+    if (selectError && !isNetworkOrMockError(selectError)) {
+      console.error("Supabase select error in removeItemFromInventory:", selectError);
+      return false;
+    }
+
+    if (!data) {
+      // Check local cache if offline
+      const cached = getCachedInventory(userId);
+      const existing = cached.find((i) => i.itemId === itemId);
+      if (!existing) return false;
+      let updated: PlayerInventoryItem[];
+      if (existing.quantity <= amount) {
+        updated = cached.filter((i) => i.itemId !== itemId);
+      } else {
+        updated = cached.map((i) => (i.itemId === itemId ? { ...i, quantity: i.quantity - amount } : i));
+      }
+      setCachedInventory(userId, updated);
+      return true;
+    }
 
     if (data.quantity <= amount) {
-      await supabase.from("player_inventory").delete().eq("id", data.id);
+      const { error: deleteError } = await supabase.from("player_inventory").delete().eq("id", data.id);
+      if (deleteError && !isNetworkOrMockError(deleteError)) {
+        console.error("Supabase delete error in removeItemFromInventory:", deleteError);
+        return false;
+      }
     } else {
-      await supabase
+      const { error: updateError } = await supabase
         .from("player_inventory")
         .update({ quantity: data.quantity - amount })
         .eq("id", data.id);
+      if (updateError && !isNetworkOrMockError(updateError)) {
+        console.error("Supabase update error in removeItemFromInventory:", updateError);
+        return false;
+      }
     }
 
     void fetchPlayerInventory(userId);
     return true;
-  } catch {
+  } catch (err: any) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("removeItemFromInventory exception:", err);
+    }
     return false;
   }
 }
 
 export async function hasItem(userId: string, itemId: string): Promise<boolean> {
   const items = await fetchPlayerInventory(userId);
-  return items.some((i) => i.itemId === itemId && i.quantity > 0);
+  return items.some(
+    (i) =>
+      (i.itemId === itemId ||
+        i.definition?.id === itemId ||
+        i.itemId === `arm_${itemId}` ||
+        i.itemId === `acc_${itemId}` ||
+        i.itemId === `wpn_${itemId}` ||
+        i.itemId === `con_${itemId}` ||
+        itemId === `arm_${i.itemId}` ||
+        itemId === `acc_${i.itemId}` ||
+        itemId === `wpn_${i.itemId}` ||
+        itemId === `con_${i.itemId}`) &&
+      i.quantity > 0
+  );
 }

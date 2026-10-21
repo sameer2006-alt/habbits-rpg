@@ -1,8 +1,8 @@
-import { supabase } from './supabase';
+import { supabase, isNetworkOrMockError } from './supabase';
 import { DEFAULT_REWARDS, type ItemRarity, type RewardCategory } from '../data/rewards';
-import { addItemToInventory } from './inventoryData';
+import { addItemToInventory, fetchPlayerInventory, hasItem } from './inventoryData';
 import { getItemById } from '../data/items';
-import { unlockPlayerTitle, getCachedUnlockedTitles } from './titlesData';
+import { unlockPlayerTitle, fetchPlayerTitles } from './titlesData';
 
 export interface RewardItem {
   id: string;
@@ -16,6 +16,18 @@ export interface RewardItem {
   owned: boolean;
 }
 
+export const GEAR_REWARD_MAP: Record<string, string> = {
+  blade_of_focus: "wpn_shadow_dagger",
+  shield_of_consistency: "arm_steel_carapace",
+  ring_of_time: "acc_chronos_pendant",
+  vitality_infusion: "con_vitality_elixir",
+  focus_brew: "con_focus_crystal",
+  cloak_of_shadows: "arm_cloak_of_shadows",
+  crown_of_discipline: "acc_crown_of_discipline",
+  boots_of_momentum: "arm_boots_of_momentum",
+  amulet_of_insight: "acc_amulet_of_insight",
+};
+
 export async function fetchRewards(userId: string): Promise<RewardItem[]> {
   const { data: userCustomRows, error } = await supabase
     .from('rewards')
@@ -23,7 +35,7 @@ export async function fetchRewards(userId: string): Promise<RewardItem[]> {
     .eq('user_id', userId)
     .eq('is_active', true);
 
-  if (error) {
+  if (error && !isNetworkOrMockError(error)) {
     console.error('Supabase rewards fetch error:', error);
   }
 
@@ -33,20 +45,55 @@ export async function fetchRewards(userId: string): Promise<RewardItem[]> {
     .eq('user_id', userId);
 
   const ownedIds = new Set((ownedRows ?? []).map((o) => o.reward_id));
+  const localKey = `owned_rewards_${userId}`;
   try {
-    const localOwned: string[] = JSON.parse(localStorage.getItem(`owned_rewards_${userId}`) || "[]");
+    const localOwned: string[] = JSON.parse(localStorage.getItem(localKey) || "[]");
     localOwned.forEach((id) => ownedIds.add(id));
   } catch {
     // safe fallback
   }
 
-  // Synchronize title ownership from unlocked titles cache
-  const unlockedTitles = getCachedUnlockedTitles(userId);
-  if (unlockedTitles.includes("title_relentless")) {
-    ownedIds.add("title_relentless");
+  // Synchronize title ownership from authoritative unlocked titles
+  try {
+    const unlockedTitles = await fetchPlayerTitles(userId);
+    if (unlockedTitles.includes("title_relentless")) {
+      ownedIds.add("title_relentless");
+    }
+    if (unlockedTitles.includes("title_monarch") || unlockedTitles.includes("title_shadow_monarch")) {
+      ownedIds.add("title_monarch");
+    }
+  } catch (err) {
+    console.warn("Could not synchronize titles in fetchRewards:", err);
   }
-  if (unlockedTitles.includes("title_monarch") || unlockedTitles.includes("title_shadow_monarch")) {
-    ownedIds.add("title_monarch");
+
+  // Synchronize gear ownership from authoritative player inventory
+  try {
+    const inventoryItems = await fetchPlayerInventory(userId);
+    for (const [rewardId, mappedItemId] of Object.entries(GEAR_REWARD_MAP)) {
+      const def = getItemById(mappedItemId) || getItemById(rewardId);
+      if (def && def.category === "equipment") {
+        const hasGear = inventoryItems.some(
+          (inv) =>
+            (inv.itemId === mappedItemId ||
+              inv.itemId === rewardId ||
+              inv.definition?.id === mappedItemId ||
+              inv.definition?.id === rewardId) &&
+            inv.quantity > 0
+        );
+        if (hasGear) {
+          ownedIds.add(rewardId);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Could not synchronize gear inventory in fetchRewards:", err);
+  }
+
+  // Persist updated ownership set to local cache for resilient offline use
+  try {
+    localStorage.setItem(localKey, JSON.stringify(Array.from(ownedIds)));
+  } catch {
+    // safe fallback
   }
 
   // Build the catalog list starting with default 27+ rewards
@@ -100,8 +147,10 @@ export async function addReward(
     type: reward.type,
     is_active: true,
   });
-  if (error) console.error('Failed to add reward:', error);
-  return !error;
+  if (error && !isNetworkOrMockError(error)) {
+    console.error('Failed to add reward:', error);
+  }
+  return !error || isNetworkOrMockError(error);
 }
 
 const isUUID = (str: string) =>
@@ -136,8 +185,7 @@ export async function purchaseReward(
     return { success: false, error: 'Not enough coins' };
   }
 
-  // Check if already owned
-  const isCustomUuid = isUUID(rewardId);
+  // Authoritative duplicate check
   const localKey = `owned_rewards_${userId}`;
   let localOwned: string[] = [];
   try {
@@ -147,31 +195,76 @@ export async function purchaseReward(
     localOwned = [];
   }
 
-  // Also verify title ownership to prevent duplicate title purchases
-  const unlockedTitles = getCachedUnlockedTitles(userId);
-  const isTitleAlreadyOwned =
-    (rewardId === "title_relentless" && unlockedTitles.includes("title_relentless")) ||
-    (rewardId === "title_monarch" &&
-      (unlockedTitles.includes("title_monarch") || unlockedTitles.includes("title_shadow_monarch")));
-
-  if (localOwned.includes(rewardId) || isTitleAlreadyOwned) {
-    return { success: false, error: 'Already owned' };
+  // 1. Title duplicate check
+  if (rewardId === "title_relentless") {
+    const titles = await fetchPlayerTitles(userId);
+    if (titles.includes("title_relentless")) {
+      return { success: false, error: 'Already owned' };
+    }
+  } else if (rewardId === "title_monarch") {
+    const titles = await fetchPlayerTitles(userId);
+    if (titles.includes("title_monarch") || titles.includes("title_shadow_monarch")) {
+      return { success: false, error: 'Already owned' };
+    }
+  } else if (rewardId.startsWith("title_")) {
+    const titles = await fetchPlayerTitles(userId);
+    if (titles.includes(rewardId)) {
+      return { success: false, error: 'Already owned' };
+    }
   }
 
+  // 2. Unique equipment gear duplicate check
+  const mappedItemId = GEAR_REWARD_MAP[rewardId] || rewardId;
+  const itemDef = getItemById(mappedItemId) || getItemById(rewardId);
+  if (itemDef && itemDef.category === "equipment") {
+    const ownsGear = (await hasItem(userId, mappedItemId)) || (await hasItem(userId, rewardId));
+    if (ownsGear) {
+      return { success: false, error: 'Already owned' };
+    }
+  }
+
+  // 3. Custom UUID reward duplicate check
+  const isCustomUuid = isUUID(rewardId);
   if (isCustomUuid) {
     try {
-      const { data: existing } = await supabase
+      const { data: existing, error: existingErr } = await supabase
         .from('user_rewards')
         .select('id')
         .eq('user_id', userId)
         .eq('reward_id', rewardId)
         .maybeSingle();
 
-      if (existing) return { success: false, error: 'Already owned' };
+      if (!existingErr && existing) return { success: false, error: 'Already owned' };
     } catch {
       // safe fallback
     }
   }
+
+  // 4. Local ownership cache check
+  if (localOwned.includes(rewardId)) {
+    return { success: false, error: 'Already owned' };
+  }
+
+  // Safe coin rollback helper that restores deducted coins without overwriting newer concurrent balances
+  const rollbackCoins = async (costToRefund: number) => {
+    try {
+      const { data: latestRow, error: selectErr } = await supabase
+        .from('player_progress')
+        .select('coins')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!selectErr && latestRow && typeof latestRow.coins === 'number') {
+        const restored = latestRow.coins + costToRefund;
+        await supabase
+          .from('player_progress')
+          .update({ coins: restored })
+          .eq('user_id', userId);
+      }
+    } catch (err) {
+      console.warn('Supabase coins rollback exception:', err);
+    }
+  };
 
   // Deduct coins in DB
   const newCoins = authoritativeCoins - cost;
@@ -182,50 +275,80 @@ export async function purchaseReward(
       .eq('user_id', userId);
 
     if (updateError) {
-      const isNetworkOrPlaceholder =
-        String(updateError.message || '').includes('fetch failed') ||
-        String(updateError.details || '').includes('ENOTFOUND') ||
-        String(updateError.message || '').includes('placeholder');
-
-      if (!isNetworkOrPlaceholder) {
+      if (!isNetworkOrMockError(updateError)) {
         console.error('Failed to deduct coins in DB:', updateError);
         return { success: false, error: 'Purchase failed: could not deduct coins' };
       }
       console.warn('Supabase offline or placeholder URL, proceeding with local purchase');
     }
   } catch (err: any) {
+    if (!isNetworkOrMockError(err)) {
+      console.error('Exception deducting coins:', err);
+      return { success: false, error: 'Purchase failed: could not deduct coins' };
+    }
     console.warn('Supabase update coins caught exception (offline/mock):', err?.message);
   }
 
-  // Record ownership in DB if custom reward (has UUID)
+  // Downstream Operation 1: Record ownership in DB if custom reward (has UUID)
   if (isCustomUuid) {
     try {
       const { error: insertError } = await supabase
         .from('user_rewards')
         .insert({ user_id: userId, reward_id: rewardId });
 
-      if (insertError) {
-        const isNetworkOrPlaceholder =
-          String(insertError.message || '').includes('fetch failed') ||
-          String(insertError.details || '').includes('ENOTFOUND') ||
-          String(insertError.message || '').includes('placeholder');
-
-        if (!isNetworkOrPlaceholder) {
-          console.error('Failed to record purchase in user_rewards, rolling back coins:', insertError);
-          // Rollback coin deduction
-          await supabase
-            .from('player_progress')
-            .update({ coins: authoritativeCoins })
-            .eq('user_id', userId);
-          return { success: false, error: 'Purchase failed: could not claim reward' };
-        }
+      if (insertError && !isNetworkOrMockError(insertError)) {
+        console.error('Failed to record purchase in user_rewards, rolling back coins:', insertError);
+        await rollbackCoins(cost);
+        return { success: false, error: 'Purchase failed: could not claim reward' };
       }
     } catch (err: any) {
+      if (!isNetworkOrMockError(err)) {
+        console.error('Exception recording in user_rewards, rolling back coins:', err);
+        await rollbackCoins(cost);
+        return { success: false, error: 'Purchase failed: could not claim reward' };
+      }
       console.warn('Supabase insert user_rewards caught exception (offline/mock):', err?.message);
     }
   }
 
-  // Persist local backup of owned items (both default and custom)
+  // Downstream Operation 2: Deposit purchased gear or consumable into player inventory
+  const itemIdToDeposit = GEAR_REWARD_MAP[rewardId] || (getItemById(rewardId) ? rewardId : undefined);
+  if (itemIdToDeposit) {
+    const invResult = await addItemToInventory(userId, itemIdToDeposit, 1);
+    if (!invResult.success) {
+      console.error('Failed to deposit purchased item into inventory, rolling back coins:', invResult.error);
+      await rollbackCoins(cost);
+      return { success: false, error: invResult.error || 'Purchase failed: could not deposit item into inventory' };
+    }
+  }
+
+  // Downstream Operation 3: Authoritatively unlock purchased titles
+  if (rewardId === "title_relentless") {
+    const titleSuccess = await unlockPlayerTitle(userId, "title_relentless");
+    if (!titleSuccess) {
+      console.error('Failed to unlock title_relentless, rolling back coins');
+      await rollbackCoins(cost);
+      return { success: false, error: 'Purchase failed: could not unlock title' };
+    }
+  } else if (rewardId === "title_monarch") {
+    const titleSuccess = await unlockPlayerTitle(userId, "title_monarch");
+    if (!titleSuccess) {
+      console.error('Failed to unlock title_monarch, rolling back coins');
+      await rollbackCoins(cost);
+      return { success: false, error: 'Purchase failed: could not unlock title' };
+    }
+    // Also unlock title_shadow_monarch for complete backward compatibility
+    await unlockPlayerTitle(userId, "title_shadow_monarch");
+  } else if (rewardId.startsWith("title_")) {
+    const titleSuccess = await unlockPlayerTitle(userId, rewardId);
+    if (!titleSuccess) {
+      console.error(`Failed to unlock title ${rewardId}, rolling back coins`);
+      await rollbackCoins(cost);
+      return { success: false, error: 'Purchase failed: could not unlock title' };
+    }
+  }
+
+  // Downstream Operation 4: Persist local backup of owned items ONLY after all downstream operations succeed
   try {
     if (!localOwned.includes(rewardId)) {
       localOwned.push(rewardId);
@@ -233,33 +356,6 @@ export async function purchaseReward(
     }
   } catch {
     // fallback
-  }
-
-  // Deep RPG Subsystem: Map purchased gear/consumables into player inventory
-  const gearItemMap: Record<string, string> = {
-    blade_of_focus: "wpn_shadow_dagger",
-    shield_of_consistency: "arm_steel_carapace",
-    ring_of_time: "acc_chronos_pendant",
-    vitality_infusion: "con_vitality_elixir",
-    focus_brew: "con_focus_crystal",
-    cloak_of_shadows: "arm_cloak_of_shadows",
-    crown_of_discipline: "acc_crown_of_discipline",
-    boots_of_momentum: "arm_boots_of_momentum",
-    amulet_of_insight: "acc_amulet_of_insight",
-  };
-  const itemIdToDeposit = gearItemMap[rewardId] || (getItemById(rewardId) ? rewardId : undefined);
-  if (itemIdToDeposit) {
-    void addItemToInventory(userId, itemIdToDeposit, 1);
-  }
-
-  // Deep RPG Subsystem: Unlock purchased titles
-  if (rewardId === "title_relentless") {
-    void unlockPlayerTitle(userId, "title_relentless");
-  } else if (rewardId === "title_monarch") {
-    void unlockPlayerTitle(userId, "title_monarch");
-    void unlockPlayerTitle(userId, "title_shadow_monarch");
-  } else if (rewardId.startsWith("title_")) {
-    void unlockPlayerTitle(userId, rewardId);
   }
 
   return { success: true, newCoins };

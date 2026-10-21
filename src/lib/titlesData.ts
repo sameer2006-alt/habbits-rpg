@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase, isNetworkOrMockError } from "./supabase";
 import { getTitleById, type TitleDefinition } from "../data/titles";
 import type { Player, Achievement } from "../types/game";
 
@@ -57,13 +57,19 @@ export async function fetchPlayerTitles(userId: string): Promise<string[]> {
       .select("title_id")
       .eq("user_id", userId);
 
-    if (!error && data) {
+    if (error) {
+      if (!isNetworkOrMockError(error)) {
+        console.error("Supabase fetchPlayerTitles error:", error);
+      }
+    } else if (data) {
       const titles = Array.from(new Set(["title_recruit", ...data.map((r) => r.title_id)]));
       setCachedUnlockedTitles(userId, titles);
       return titles;
     }
-  } catch {
-    // safe fallback
+  } catch (err) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("Supabase fetchPlayerTitles exception:", err);
+    }
   }
 
   return cached;
@@ -77,15 +83,37 @@ export async function unlockPlayerTitle(userId: string, titleId: string): Promis
   if (current.includes(titleId)) return true;
 
   try {
-    await supabase.from("player_titles").insert({
+    const { error: insertError } = await supabase.from("player_titles").insert({
       id: `title_${userId}_${titleId}`,
       user_id: userId,
       title_id: titleId,
     });
+
+    if (insertError) {
+      if (insertError.code === "23505") {
+        // Unique violation means row was already recorded concurrently (idempotent success)
+        setCachedUnlockedTitles(userId, [...current, titleId]);
+        return true;
+      }
+      if (!isNetworkOrMockError(insertError)) {
+        console.error("Supabase unlockPlayerTitle error:", insertError);
+        return false;
+      }
+      // Offline / Mock fallback
+      setCachedUnlockedTitles(userId, [...current, titleId]);
+      return true;
+    }
+
     setCachedUnlockedTitles(userId, [...current, titleId]);
     return true;
-  } catch {
-    return false;
+  } catch (err: any) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("unlockPlayerTitle unexpected exception:", err);
+      return false;
+    }
+    // Offline / Mock fallback
+    setCachedUnlockedTitles(userId, [...current, titleId]);
+    return true;
   }
 }
 
@@ -102,12 +130,18 @@ export async function fetchEquippedTitle(userId: string): Promise<TitleDefinitio
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (!error && data && data.equipped_title_id) {
+    if (error) {
+      if (!isNetworkOrMockError(error)) {
+        console.error("Supabase fetchEquippedTitle error:", error);
+      }
+    } else if (data && data.equipped_title_id) {
       setCachedEquippedTitle(userId, data.equipped_title_id);
       return getTitleById(data.equipped_title_id);
     }
-  } catch {
-    // safe fallback
+  } catch (err) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("Supabase fetchEquippedTitle exception:", err);
+    }
   }
 
   return cachedId ? getTitleById(cachedId) : getTitleById("title_recruit");
@@ -133,17 +167,26 @@ export async function equipTitle(
   setCachedEquippedTitle(userId, titleId);
 
   try {
-    await supabase.from("player_title_state").upsert({
+    const { error: upsertError } = await supabase.from("player_title_state").upsert({
       user_id: userId,
       equipped_title_id: titleId,
       updated_at: new Date().toISOString(),
     });
-  } catch {
-    // safe fallback
+
+    if (upsertError && !isNetworkOrMockError(upsertError)) {
+      console.error("Supabase equipTitle error:", upsertError);
+      return { success: false, error: upsertError.message || "Failed to equip title in database" };
+    }
+  } catch (err: any) {
+    if (!isNetworkOrMockError(err)) {
+      console.error("Supabase equipTitle exception:", err);
+      return { success: false, error: err?.message || "Failed to equip title" };
+    }
   }
 
   return { success: true, title: definition };
 }
+
 
 /**
  * Automatically evaluates progression milestones and unlocks eligible titles.

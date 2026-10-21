@@ -870,11 +870,8 @@ function App() {
         updatedStats.discipline += 5;
         customToast = "+5 Discipline permanently added!";
       } else if (rewardId === "title_relentless") {
-        void unlockPlayerTitle(user.id, "title_relentless");
         customToast = "Title Unlocked: 'The Relentless'! Check the Armory to equip.";
       } else if (rewardId === "title_monarch") {
-        void unlockPlayerTitle(user.id, "title_monarch");
-        void unlockPlayerTitle(user.id, "title_shadow_monarch");
         customToast = "Title Unlocked: 'Shadow Monarch'! Check the Armory to equip.";
       } else if (
         rewardId === "cloak_of_shadows" ||
