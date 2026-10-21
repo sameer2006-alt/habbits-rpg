@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { DEFAULT_REWARDS, type ItemRarity, type RewardCategory } from '../data/rewards';
 import { addItemToInventory } from './inventoryData';
 import { getItemById } from '../data/items';
+import { unlockPlayerTitle, getCachedUnlockedTitles } from './titlesData';
 
 export interface RewardItem {
   id: string;
@@ -37,6 +38,15 @@ export async function fetchRewards(userId: string): Promise<RewardItem[]> {
     localOwned.forEach((id) => ownedIds.add(id));
   } catch {
     // safe fallback
+  }
+
+  // Synchronize title ownership from unlocked titles cache
+  const unlockedTitles = getCachedUnlockedTitles(userId);
+  if (unlockedTitles.includes("title_relentless")) {
+    ownedIds.add("title_relentless");
+  }
+  if (unlockedTitles.includes("title_monarch") || unlockedTitles.includes("title_shadow_monarch")) {
+    ownedIds.add("title_monarch");
   }
 
   // Build the catalog list starting with default 27+ rewards
@@ -137,7 +147,14 @@ export async function purchaseReward(
     localOwned = [];
   }
 
-  if (localOwned.includes(rewardId)) {
+  // Also verify title ownership to prevent duplicate title purchases
+  const unlockedTitles = getCachedUnlockedTitles(userId);
+  const isTitleAlreadyOwned =
+    (rewardId === "title_relentless" && unlockedTitles.includes("title_relentless")) ||
+    (rewardId === "title_monarch" &&
+      (unlockedTitles.includes("title_monarch") || unlockedTitles.includes("title_shadow_monarch")));
+
+  if (localOwned.includes(rewardId) || isTitleAlreadyOwned) {
     return { success: false, error: 'Already owned' };
   }
 
@@ -225,10 +242,24 @@ export async function purchaseReward(
     ring_of_time: "acc_chronos_pendant",
     vitality_infusion: "con_vitality_elixir",
     focus_brew: "con_focus_crystal",
+    cloak_of_shadows: "arm_cloak_of_shadows",
+    crown_of_discipline: "acc_crown_of_discipline",
+    boots_of_momentum: "arm_boots_of_momentum",
+    amulet_of_insight: "acc_amulet_of_insight",
   };
   const itemIdToDeposit = gearItemMap[rewardId] || (getItemById(rewardId) ? rewardId : undefined);
   if (itemIdToDeposit) {
     void addItemToInventory(userId, itemIdToDeposit, 1);
+  }
+
+  // Deep RPG Subsystem: Unlock purchased titles
+  if (rewardId === "title_relentless") {
+    void unlockPlayerTitle(userId, "title_relentless");
+  } else if (rewardId === "title_monarch") {
+    void unlockPlayerTitle(userId, "title_monarch");
+    void unlockPlayerTitle(userId, "title_shadow_monarch");
+  } else if (rewardId.startsWith("title_")) {
+    void unlockPlayerTitle(userId, rewardId);
   }
 
   return { success: true, newCoins };

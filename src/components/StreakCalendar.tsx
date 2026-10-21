@@ -16,11 +16,10 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ userId, classNam
   const [month, setMonth] = useState(now.getMonth());
   const [monthData, setMonthData] = useState<MonthViewData | null>(null);
   const [selectedDay, setSelectedDay] = useState<CalendarDayData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     fetchMonthActivityRecords(userId, year, month)
       .then((records) => {
@@ -41,6 +40,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ userId, classNam
   }, [userId, year, month]);
 
   const handlePrevMonth = () => {
+    setLoading(true);
     if (month === 0) {
       setYear(year - 1);
       setMonth(11);
@@ -50,6 +50,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({ userId, classNam
   };
 
   const handleNextMonth = () => {
+    setLoading(true);
     if (month === 11) {
       setYear(year + 1);
       setMonth(0);

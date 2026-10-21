@@ -85,6 +85,19 @@ export const ITEMS_CATALOG: ItemDefinition[] = [
     statModifiers: { strength: 12, focus: 10, consistency: 6 },
     source: "boss_drop",
   },
+  {
+    id: "weapon_plasma_katana",
+    name: "Plasma Katana",
+    description: "High-frequency energy blade infused with ionic plasma. Slices through mental lethargy with laser precision.",
+    category: "equipment",
+    slot: "weapon",
+    rarity: "epic",
+    icon: "Sword",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { strength: 10, focus: 8, discipline: 4 },
+    source: "season",
+  },
 
   // ── ARMOR ──
   {
@@ -139,6 +152,71 @@ export const ITEMS_CATALOG: ItemDefinition[] = [
     statModifiers: { vitality: 16, consistency: 12, discipline: 10 },
     source: "boss_drop",
   },
+  {
+    id: "armor_cyber_aegis",
+    name: "Cyber Aegis",
+    description: "Advanced cybernetic battleplate with reinforced carbon-lattice mesh. Deflects procrastination surges.",
+    category: "equipment",
+    slot: "armor",
+    rarity: "epic",
+    icon: "Shield",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { vitality: 12, consistency: 8, discipline: 4 },
+    source: "season",
+  },
+  {
+    id: "arm_cloak_of_shadows",
+    name: "Cloak of Solitude",
+    description: "Silences external distractions and provides a focused motivation aura.",
+    category: "equipment",
+    slot: "armor",
+    rarity: "epic",
+    icon: "Shield",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { focus: 8, discipline: 6, consistency: 4 },
+    source: "shop",
+  },
+  {
+    id: "cloak_of_shadows",
+    name: "Cloak of Solitude",
+    description: "Silences external distractions and provides a focused motivation aura.",
+    category: "equipment",
+    slot: "armor",
+    rarity: "epic",
+    icon: "Shield",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { focus: 8, discipline: 6, consistency: 4 },
+    source: "shop",
+  },
+  {
+    id: "arm_boots_of_momentum",
+    name: "Greaves of Swift Steps",
+    description: "Lightweight enchanted boots that encourage early morning productivity.",
+    category: "equipment",
+    slot: "armor",
+    rarity: "uncommon",
+    icon: "Shield",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { consistency: 5, vitality: 3 },
+    source: "shop",
+  },
+  {
+    id: "boots_of_momentum",
+    name: "Greaves of Swift Steps",
+    description: "Lightweight enchanted boots that encourage early morning productivity.",
+    category: "equipment",
+    slot: "armor",
+    rarity: "uncommon",
+    icon: "Shield",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { consistency: 5, vitality: 3 },
+    source: "shop",
+  },
 
   // ── ACCESSORIES ──
   {
@@ -180,6 +258,71 @@ export const ITEMS_CATALOG: ItemDefinition[] = [
     statModifiers: { strength: 8, intelligence: 8, focus: 8, discipline: 8, vitality: 8, consistency: 8 },
     source: "boss_drop",
   },
+  {
+    id: "accessory_quantum_core",
+    name: "Quantum Core",
+    description: "A subatomic chronometer pulsing with zero-point energy. Aligns habits into effortless synchronicity.",
+    category: "equipment",
+    slot: "accessory",
+    rarity: "legendary",
+    icon: "Sparkles",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { focus: 10, consistency: 10, discipline: 8, vitality: 6 },
+    source: "season",
+  },
+  {
+    id: "acc_crown_of_discipline",
+    name: "Crown of the Conqueror",
+    description: "A gilded crown awarded to those who conquer their daily procrastination.",
+    category: "equipment",
+    slot: "accessory",
+    rarity: "legendary",
+    icon: "Crown",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { discipline: 12, consistency: 10, focus: 8 },
+    source: "shop",
+  },
+  {
+    id: "crown_of_discipline",
+    name: "Crown of the Conqueror",
+    description: "A gilded crown awarded to those who conquer their daily procrastination.",
+    category: "equipment",
+    slot: "accessory",
+    rarity: "legendary",
+    icon: "Crown",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { discipline: 12, consistency: 10, focus: 8 },
+    source: "shop",
+  },
+  {
+    id: "acc_amulet_of_insight",
+    name: "Talisman of Enlightenment",
+    description: "Glows whenever you spend dedicated focus time reading or learning.",
+    category: "equipment",
+    slot: "accessory",
+    rarity: "rare",
+    icon: "Ring",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { intelligence: 8, focus: 6 },
+    source: "shop",
+  },
+  {
+    id: "amulet_of_insight",
+    name: "Talisman of Enlightenment",
+    description: "Glows whenever you spend dedicated focus time reading or learning.",
+    category: "equipment",
+    slot: "accessory",
+    rarity: "rare",
+    icon: "Ring",
+    stackable: false,
+    maxStack: 1,
+    statModifiers: { intelligence: 8, focus: 6 },
+    source: "shop",
+  },
 
   // ── CONSUMABLES & SPECIAL ──
   {
@@ -218,6 +361,18 @@ export const ITEMS_CATALOG: ItemDefinition[] = [
 ];
 
 export function getItemById(itemId: string): ItemDefinition | undefined {
-  return ITEMS_CATALOG.find((item) => item.id === itemId);
+  const direct = ITEMS_CATALOG.find((item) => item.id === itemId);
+  if (direct) return direct;
+  return ITEMS_CATALOG.find(
+    (item) =>
+      item.id === `arm_${itemId}` ||
+      item.id === `acc_${itemId}` ||
+      item.id === `wpn_${itemId}` ||
+      item.id === `con_${itemId}` ||
+      item.id === `spc_${itemId}` ||
+      itemId === `arm_${item.id}` ||
+      itemId === `acc_${item.id}` ||
+      itemId === `wpn_${item.id}`
+  );
 }
 

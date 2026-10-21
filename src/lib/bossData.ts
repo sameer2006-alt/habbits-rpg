@@ -1,6 +1,7 @@
 import { BOSSES, type BossDef } from "../data/bosses";
 import { addItemToInventory } from "./inventoryData";
 import { unlockPlayerTitle } from "./titlesData";
+import { normalizeBossKey, type BossKey } from "./bossCrestUtils";
 
 export interface BossProgress {
   bossId: string;
@@ -213,13 +214,17 @@ export function claimBossReward(
   recordLifetimeBossDefeat(userId, bossId, state.lastResetPeriod);
 
   // Deep RPG Subsystem: Drop boss-exclusive equipment into player inventory
-  const bossDropMap: Record<string, string> = {
+  const normalizedKey = normalizeBossKey(bossId);
+  const bossDropMap: Record<BossKey, string> = {
     ignis: "wpn_sunfire_blade",
     vortex: "arm_obsidian_aegis",
     malakor: "wpn_voidcaller_saber",
     leviathan: "acc_monarch_sigil",
   };
-  const dropItemId = bossDropMap[bossId] || "spc_ignis_ember";
+  const isKnownBoss = (["ignis", "vortex", "malakor", "leviathan"] as const).some((key) =>
+    bossId.toLowerCase().includes(key)
+  );
+  const dropItemId = (isKnownBoss && bossDropMap[normalizedKey]) || "spc_ignis_ember";
   void addItemToInventory(userId, dropItemId, 1);
 
   // Unlock Apex Vanquisher title

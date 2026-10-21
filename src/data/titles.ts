@@ -74,6 +74,33 @@ export const TITLES_CATALOG: TitleDefinition[] = [
     badgeColor: "#a855f7",
     glowColor: "rgba(168, 85, 247, 0.5)",
   },
+  {
+    id: "title_season_champion",
+    name: "Season Champion",
+    description: "Pinnacle competitor who mastered all 10 seasonal milestones with unwavering consistency.",
+    unlockCondition: "Attain Season Level 10 in the active competitive season.",
+    rarity: "legendary",
+    badgeColor: "#ffd700",
+    glowColor: "rgba(255, 215, 0, 0.45)",
+  },
+  {
+    id: "title_relentless",
+    name: "The Relentless",
+    description: "A prestigious title displayed on your character card and profile hero.",
+    unlockCondition: "Acquired from the Requisitions Shop.",
+    rarity: "rare",
+    badgeColor: "#06b6d4",
+    glowColor: "rgba(6, 182, 212, 0.35)",
+  },
+  {
+    id: "title_monarch",
+    name: "Shadow Monarch",
+    description: "Exclusive title reserved for habit warriors who conquer their darker habits.",
+    unlockCondition: "Acquired from the Requisitions Shop.",
+    rarity: "legendary",
+    badgeColor: "#a855f7",
+    glowColor: "rgba(168, 85, 247, 0.5)",
+  },
 ];
 
 export function getTitleById(titleId: string): TitleDefinition | undefined {

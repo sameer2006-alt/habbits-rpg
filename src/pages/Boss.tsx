@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Swords,
   Trophy,
@@ -24,7 +25,6 @@ import { BOSSES, type BossDef, type BossCadence } from "../data/bosses";
 import {
   getOrInitBossState,
   claimBossReward,
-  applyDamageToBosses,
   type BossProgress,
 } from "../lib/bossData";
 import { GlowButton } from "../components/ui/GlowButton";
@@ -112,7 +112,6 @@ export default function Boss({
     return weeklyBoss ? weeklyBoss.id : BOSSES[0]?.id || "";
   });
 
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [victoryBoss, setVictoryBoss] = useState<BossDef | null>(null);
 
   const [prevUserId, setPrevUserId] = useState(userId);
@@ -173,24 +172,7 @@ export default function Boss({
     }
   };
 
-  // Directive Strike Handler
-  const handleDirectiveStrike = (boss: BossDef) => {
-    if (isDefeated) return;
-    const res = applyDamageToBosses(userId, boss.damagePerQuest);
-    reloadProgress();
-    if (res.defeatedBosses.length > 0) {
-      setVictoryBoss(boss);
-    } else {
-      setToastMessage(`DIRECTIVE EXECUTED: +${boss.damagePerQuest} DMG DEALT TO ${boss.name.toUpperCase()}!`);
-    }
-  };
 
-  // Toast Auto-dismiss
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = setTimeout(() => setToastMessage(null), 3200);
-    return () => clearTimeout(timer);
-  }, [toastMessage]);
 
   const weeklyCount = BOSSES.filter((b) => b.cadence === "WEEKLY").length;
   const monthlyCount = BOSSES.filter((b) => b.cadence === "MONTHLY").length;
@@ -529,14 +511,16 @@ export default function Boss({
                   </GlowButton>
                 )
               ) : (
-                <GlowButton
-                  variant="danger"
-                  size="lg"
-                  icon={<Swords size={18} />}
-                  onClick={() => handleDirectiveStrike(currentBoss)}
-                >
-                  EXECUTE DIRECTIVE STRIKE (+{currentBoss.damagePerQuest} DMG)
-                </GlowButton>
+                <Link to="/quests" style={{ textDecoration: "none" }}>
+                  <GlowButton
+                    variant="danger"
+                    size="lg"
+                    icon={<Swords size={18} />}
+                    iconRight={<ArrowRight size={16} />}
+                  >
+                    CLEAR QUESTS TO STRIKE (+{currentBoss.damagePerQuest} DMG)
+                  </GlowButton>
+                </Link>
               )}
             </div>
           </div>
@@ -986,26 +970,7 @@ export default function Boss({
         </div>
       </div>
 
-      {/* Interactive Quick Execute Feedback Toast */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            className="boss-strike-toast"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="boss-strike-toast-icon">
-              <Zap size={22} />
-            </span>
-            <div className="boss-strike-toast-content">
-              <span className="boss-strike-toast-title">DIRECTIVE EXECUTED</span>
-              <span className="boss-strike-toast-desc">{toastMessage}</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Cinematic Boss Victory Overlay */}
       <BossVictoryModal

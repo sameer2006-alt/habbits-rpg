@@ -1,14 +1,14 @@
 # HABBITS RPG — VISUAL DESIGN SPECIFICATION (DESIGN.md)
 
-> **VISUAL SOURCE OF TRUTH**: Final Authoritative Screens in Stitch MCP Project `Habbits RPG System UI` (ID: `14828715544746051941`).  
-> **FUNCTIONAL SOURCE OF TRUTH**: Existing React + TypeScript + Supabase Codebase.  
+> **VISUAL SOURCE OF TRUTH**: Final Authoritative Screens in Stitch MCP Project `Habbits RPG System UI` (ID: `14828715544746051941`).
+> **FUNCTIONAL SOURCE OF TRUTH**: Existing React + TypeScript + Supabase Codebase.
 > **INTENDED PALETTE**: Near-Black Void + Deep Burgundy + Deep Crimson + Muted Gold / Amber + Minimal Tactical Cyan.
 
 ---
 
 ## 1. DESIGN PHILOSOPHY
 
-Habbits RPG embodies a **Dark Cinematic Solo-Leveling RPG Interface**—a hybrid of an awakened, omniscient hunter system telemetry display and a high-stakes tactical command console. 
+Habbits RPG embodies a **Dark Cinematic Solo-Leveling RPG Interface**—a hybrid of an awakened, omniscient hunter system telemetry display and a high-stakes tactical command console.
 
 Key visual tenets:
 1. **The Indifferent System**: The UI presents self-improvement and habit discipline as an existential awakening. Telemetry readouts, monospace labels, uppercase micro-copy, bracketed badges (`[SYS_ALERT]`, `// DIRECTIVE`), and segmented power gauges reinforce this tone.
@@ -165,7 +165,7 @@ Key visual tenets:
   - Desktop: `Habbits RPG - Cinematic System Dashboard` (`76495dfe5f7d45f5b9b8e05f28005a20`)
   - Mobile: `Habbits RPG - Mobile Cinematic Dashboard` (`9dfcf991685b4bc98aed4cde6cba309f`)
 - **Purpose**: Central command overview of daily discipline, vital statistics, active streak, and immediate boss threat.
-- **Primary Components**: 
+- **Primary Components**:
   - Hunter Identity Header (Avatar silhouette, Rank letter badge, Level gauge).
   - Vital Telemetry Bar (Active Streak flame, Daily XP, Coins, Power Score rating).
   - Daily Directive Stream (Today's prioritized quests with reticle checkboxes).
@@ -218,10 +218,10 @@ Key visual tenets:
   - Selection/Hierarchy: `Habbits RPG - Boss Arena: Complete Raid Hierarchy` (`2508a7ff7ebc401faea8b948e690e27a`) & Mobile (`28877df8c77a4cc5b67409524a4355a6`)
   - Active Encounter: `Habbits RPG - Boss Arena: Apex Raid Chamber` (`1b118186953a42f6b1fd75f20cca989d`) & Mobile (`f981a039f3384e72be96cca57cbfac55`)
 - **Purpose**: Select tier bosses or enter the active turn-based combat arena against current raid entity.
-- **Primary Components**: 
+- **Primary Components**:
   - Hierarchy Hub: Boss roster cards (Slime Sovereign, Shadow Hound, Malakor, etc.) with unlock requirements.
   - Active Chamber: Towering boss art banner, massive Boss HP bar, Combat Log console, Attack/Ability trigger deck, Hunter stamina gauge.
-- **Desktop Structure**: 
+- **Desktop Structure**:
   - Hierarchy: 3-column tiered cards.
   - Active Chamber: Cinematic split layout. Top: Boss Arena Banner. Bottom Left: Combat Telemetry Log. Bottom Right: Action Command Center.
 - **Mobile Structure**: Fullscreen combat card with stacked Boss Artwork, Boss HP gauge, and sticky bottom attack action bar.

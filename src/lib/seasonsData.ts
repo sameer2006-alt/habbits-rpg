@@ -6,6 +6,7 @@ import {
   type PlayerSeason,
 } from "../data/seasons";
 import { addItemToInventory } from "./inventoryData";
+import { unlockPlayerTitle } from "./titlesData";
 
 export function getCurrentSeasonWindow(customDate?: Date): SeasonDefinition {
   const now = customDate ? new Date(customDate) : new Date();
@@ -249,6 +250,9 @@ export async function claimSeasonMilestone(
 
   if (milestone.rewardItemId) {
     await addItemToInventory(userId, milestone.rewardItemId, 1);
+  }
+  if (milestone.rewardTitleId) {
+    await unlockPlayerTitle(userId, milestone.rewardTitleId);
   }
 
   const storageKey = `${SEASON_STORAGE_KEY_PREFIX}${userId}_${playerSeason.seasonId}`;

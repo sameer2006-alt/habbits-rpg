@@ -104,6 +104,7 @@ import {
 import {
   fetchEquippedTitle,
   checkAndUnlockTitlesFromProgress,
+  unlockPlayerTitle,
   type TitleDefinition,
 } from "./lib/titlesData";
 import { calculatePowerScore } from "./lib/powerScore";
@@ -868,6 +869,23 @@ function App() {
       } else if (rewardId === "discipline_draught") {
         updatedStats.discipline += 5;
         customToast = "+5 Discipline permanently added!";
+      } else if (rewardId === "title_relentless") {
+        void unlockPlayerTitle(user.id, "title_relentless");
+        customToast = "Title Unlocked: 'The Relentless'! Check the Armory to equip.";
+      } else if (rewardId === "title_monarch") {
+        void unlockPlayerTitle(user.id, "title_monarch");
+        void unlockPlayerTitle(user.id, "title_shadow_monarch");
+        customToast = "Title Unlocked: 'Shadow Monarch'! Check the Armory to equip.";
+      } else if (
+        rewardId === "cloak_of_shadows" ||
+        rewardId === "crown_of_discipline" ||
+        rewardId === "boots_of_momentum" ||
+        rewardId === "amulet_of_insight" ||
+        rewardId === "blade_of_focus" ||
+        rewardId === "shield_of_consistency" ||
+        rewardId === "ring_of_time"
+      ) {
+        customToast = "Gear acquired! Deposited into your Armory inventory.";
       }
 
       const authoritativeCoins = typeof result.newCoins === "number" ? result.newCoins : Math.max(0, player.progress.coins - cost);
@@ -1184,10 +1202,14 @@ function App() {
     setPlayer(updated);
     void savePlayerProgress(user.id, updated);
 
+    if (reward.titleId) {
+      void unlockPlayerTitle(user.id, reward.titleId);
+    }
+
     showEvent(
       "season_milestone",
       "SEASON MILESTONE CLAIMED!",
-      `Level ${milestone.level}: +${reward.xp} XP  +${reward.coins} Coins${reward.itemId ? `  +Gear Loot` : ""}`
+      `Level ${milestone.level}: +${reward.xp} XP  +${reward.coins} Coins${reward.itemId ? `  +Gear Loot` : ""}${reward.titleId ? `  +New Title` : ""}`
     );
   };
 
@@ -1195,7 +1217,6 @@ function App() {
 
   return (
     <>
-      <Toast message={toastMessage} />
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       <EventOverlay event={gameEvent} onClose={dismissEvent} />
 

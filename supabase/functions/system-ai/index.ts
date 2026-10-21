@@ -326,9 +326,6 @@ ${playerContextPrompt}
     }
 
         // Query available models to select supported model
-    let modelName = "gemini-2.0-flash";
-    let apiVersion = "v1beta";
-
     let candidateModels: string[] = [];
     try {
       const listRes = await fetch("https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiApiKey);

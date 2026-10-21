@@ -1,8 +1,8 @@
 # CODEBASE-TO-STITCH MAPPING AUDIT (STITCH_CODE_MAPPING.md)
 
-> **STITCH**: Visual Source of Truth (Project `Habbits RPG System UI`, ID: `14828715544746051941`).  
-> **CODEBASE**: Functional Source of Truth (React + TypeScript + Supabase).  
-> **DESIGN SPEC**: Defined in [`DESIGN.md`](file:///c:/Users/ADMIN/OneDrive/Desktop/Habbits%20RPG/life-system/DESIGN.md).  
+> **STITCH**: Visual Source of Truth (Project `Habbits RPG System UI`, ID: `14828715544746051941`).
+> **CODEBASE**: Functional Source of Truth (React + TypeScript + Supabase).
+> **DESIGN SPEC**: Defined in [`DESIGN.md`](file:///c:/Users/ADMIN/OneDrive/Desktop/Habbits%20RPG/life-system/DESIGN.md).
 > **AUDIT MANDATE**: Non-destructive audit only. No application code, database schema, or game logic is modified.
 
 ---
