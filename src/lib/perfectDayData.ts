@@ -7,6 +7,8 @@ import {
   type PerfectDayEvaluation,
   type PerfectDayUIState,
 } from "../data/perfectDay";
+import type { Quest } from "../types/game";
+import { fetchQuests } from "./questsData";
 
 const STORAGE_PREFIX = "rpg_perfect_day";
 
@@ -125,11 +127,14 @@ export async function getOrCreatePerfectDayRecord(
  * 3. Directive completed === true.
  * 4. Directive currentValue >= targetValue.
  * 5. Directive reward has been claimed successfully.
+ * 6. At least one active daily quest exists for the user.
+ * 7. All active eligible daily quests are completed.
  */
 export function evaluatePerfectDay(
   userId: string,
   dateStr: string,
-  directive: DailyDirective | null
+  directive: DailyDirective | null,
+  dailyQuests: Quest[] = []
 ): PerfectDayEvaluation {
   const missingRequirements: string[] = [];
 
@@ -165,6 +170,28 @@ export function evaluatePerfectDay(
 
   if (!directive.rewardClaimed) {
     missingRequirements.push("Daily Directive reward has not been claimed");
+  }
+
+  // Daily quest requirements:
+  // Filter eligible daily quests (exclude inactive, weekly challenges, monthly challenges)
+  const eligibleQuests = (dailyQuests || []).filter((q) => {
+    const raw = q as any;
+    if (raw.is_active === false || raw.isActive === false) return false;
+    if (raw.cadence === "WEEKLY" || raw.cadence === "MONTHLY") return false;
+    if (raw.type === "weekly" || raw.type === "monthly") return false;
+    if (typeof raw.category === "string" && raw.category.toUpperCase() === "WEEKLY") return false;
+    return true;
+  });
+
+  if (eligibleQuests.length === 0) {
+    missingRequirements.push("At least one active daily quest is required for a Perfect Day");
+  } else {
+    const incompleteQuests = eligibleQuests.filter((q) => !q.completed);
+    if (incompleteQuests.length > 0) {
+      missingRequirements.push(
+        `Incomplete daily quests remaining (${incompleteQuests.length}/${eligibleQuests.length})`
+      );
+    }
   }
 
   const eligible = missingRequirements.length === 0;
@@ -225,7 +252,8 @@ const userPerfectDayQueues = new Map<string, Promise<any>>();
  */
 export async function evaluateAndProcessPerfectDay(
   userId: string,
-  directive: DailyDirective | null
+  directive: DailyDirective | null,
+  dailyQuests?: Quest[]
 ): Promise<PerfectDayProcessResult> {
   const todayStr = getTodayDateString();
   const queueKey = `${userId}:${todayStr}`;
@@ -233,7 +261,7 @@ export async function evaluateAndProcessPerfectDay(
   const currentQueue = userPerfectDayQueues.get(queueKey) || Promise.resolve();
 
   const nextOperation = currentQueue.then(async () => {
-    return executeEvaluateAndProcessPerfectDay(userId, directive, todayStr);
+    return executeEvaluateAndProcessPerfectDay(userId, directive, todayStr, dailyQuests);
   });
 
   userPerfectDayQueues.set(queueKey, nextOperation.catch(() => {}));
@@ -244,7 +272,8 @@ export async function evaluateAndProcessPerfectDay(
 async function executeEvaluateAndProcessPerfectDay(
   userId: string,
   directive: DailyDirective | null,
-  todayStr: string
+  todayStr: string,
+  dailyQuests?: Quest[]
 ): Promise<PerfectDayProcessResult> {
   const record = await getOrCreatePerfectDayRecord(userId, todayStr);
 
@@ -257,7 +286,10 @@ async function executeEvaluateAndProcessPerfectDay(
     };
   }
 
-  const evalResult = evaluatePerfectDay(userId, todayStr, directive);
+  const questsToEvaluate =
+    dailyQuests !== undefined ? dailyQuests : await fetchQuests(userId);
+
+  const evalResult = evaluatePerfectDay(userId, todayStr, directive, questsToEvaluate);
 
   if (!evalResult.eligible) {
     return {
@@ -340,11 +372,132 @@ export async function fetchHistoricalPerfectDays(
 }
 
 /**
+ * Synchronous local retrieval of deduplicated earned Perfect Days count.
+ * Useful for immediate rendering without async flicker.
+ */
+export function getCachedEarnedPerfectDaysCount(userId: string): number {
+  if (!userId) return 0;
+  const earnedDates = new Set<string>();
+
+  try {
+    const todayStr = getTodayDateString();
+    const todayRecord = getCachedPerfectDay(userId, todayStr);
+    if (todayRecord?.earned) {
+      earnedDates.add(todayRecord.date || todayStr);
+    }
+
+    if (typeof localStorage !== "undefined") {
+      const prefix = `${STORAGE_PREFIX}_${userId}_`;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const val = JSON.parse(raw);
+              if (val.earned && val.date) {
+                earnedDates.add(val.date);
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      const recordsRaw = localStorage.getItem(`habbits_rpg_player_records_${userId}`);
+      if (recordsRaw) {
+        const parsed = JSON.parse(recordsRaw);
+        const prCount = Number(parsed?.total_perfect_days?.recordValue);
+        if (Number.isFinite(prCount) && prCount > earnedDates.size) {
+          return prCount;
+        }
+      }
+    }
+  } catch {
+    // safe fallback
+  }
+
+  return earnedDates.size;
+}
+
+/**
+ * Authoritative count of earned Perfect Days, combining local cache and Supabase history.
+ * Strictly deduplicates by calendar date so duplicate rows never inflate progress.
+ */
+export async function getEarnedPerfectDaysCount(userId: string): Promise<number> {
+  if (!userId) return 0;
+  const earnedDates = new Set<string>();
+
+  // 1. Start with local cached dates
+  try {
+    const todayStr = getTodayDateString();
+    const todayRecord = getCachedPerfectDay(userId, todayStr);
+    if (todayRecord?.earned) {
+      earnedDates.add(todayRecord.date || todayStr);
+    }
+
+    if (typeof localStorage !== "undefined") {
+      const prefix = `${STORAGE_PREFIX}_${userId}_`;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const val = JSON.parse(raw);
+              if (val.earned && val.date) {
+                earnedDates.add(val.date);
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+  } catch {
+    // safe fallback
+  }
+
+  // 2. Fetch authoritative records from Supabase
+  try {
+    const historical = await fetchHistoricalPerfectDays(userId);
+    for (const rec of historical) {
+      if (rec.earned && rec.date) {
+        earnedDates.add(rec.date);
+      }
+    }
+  } catch {
+    // safe fallback
+  }
+
+  // 3. Check personal records high-water mark if available
+  try {
+    if (typeof localStorage !== "undefined") {
+      const recordsRaw = localStorage.getItem(`habbits_rpg_player_records_${userId}`);
+      if (recordsRaw) {
+        const parsed = JSON.parse(recordsRaw);
+        const prCount = Number(parsed?.total_perfect_days?.recordValue);
+        if (Number.isFinite(prCount) && prCount > earnedDates.size) {
+          return prCount;
+        }
+      }
+    }
+  } catch {
+    // safe fallback
+  }
+
+  return earnedDates.size;
+}
+
+/**
  * Authoritative summary for System AI queries regarding Perfect Day.
  */
 export async function getPerfectDaySummaryForAI(
   userId: string,
-  directive: DailyDirective | null
+  directive: DailyDirective | null,
+  dailyQuests?: Quest[]
 ): Promise<{
   earnedToday: boolean;
   rewardClaimed: boolean;
@@ -352,9 +505,11 @@ export async function getPerfectDaySummaryForAI(
   reason: string;
 }> {
   const todayStr = getTodayDateString();
+  const questsToEvaluate =
+    dailyQuests !== undefined ? dailyQuests : await fetchQuests(userId);
   const record = await getOrCreatePerfectDayRecord(userId, todayStr);
   const status = determinePerfectDayUIState(record, directive);
-  const evaluation = evaluatePerfectDay(userId, todayStr, directive);
+  const evaluation = evaluatePerfectDay(userId, todayStr, directive, questsToEvaluate);
 
   return {
     earnedToday: record.earned,

@@ -1,13 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Achievement, AchievementTier, Player } from "../types/game";
 import { ACHIEVEMENTS, type AchievementDef } from "../data/achievements";
+import { getCachedEarnedPerfectDaysCount, getEarnedPerfectDaysCount } from "../lib/perfectDayData";
 import AchievementIconSvg from "../components/icons/AchievementIcons";
 import "./Achievements.css";
 
 interface AchievementsProps {
   achievements: Achievement[];
   player?: Player | null;
+  perfectDayCount?: number;
 }
 
 type FilterCategory =
@@ -75,10 +77,36 @@ const TIER_WEIGHT: Record<AchievementTier, number> = {
   LEGENDARY: 5,
 };
 
-export default function Achievements({ achievements, player }: AchievementsProps) {
+export default function Achievements({
+  achievements,
+  player,
+  perfectDayCount,
+}: AchievementsProps) {
   const [filter, setFilter] = useState<FilterCategory>("all");
   const [sortBy, setSortBy] = useState<SortOption>("tier");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [perfectDaysCount, setPerfectDaysCount] = useState<number>(() => {
+    return player?.profile?.id ? getCachedEarnedPerfectDaysCount(player.profile.id) : 0;
+  });
+
+  useEffect(() => {
+    if (typeof perfectDayCount === "number" || !player?.profile?.id) {
+      return;
+    }
+    let isMounted = true;
+    void getEarnedPerfectDaysCount(player.profile.id).then((count) => {
+      if (isMounted) {
+        setPerfectDaysCount(count);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [player?.profile?.id, perfectDayCount]);
+
+  const resolvedPerfectDaysCount =
+    typeof perfectDayCount === "number" ? perfectDayCount : perfectDaysCount;
 
   // Map of static definitions by ID
   const defMap = useMemo(
@@ -160,7 +188,7 @@ export default function Achievements({ achievements, player }: AchievementsProps
             currentVal = player.stats.consistency || 0;
             break;
           case "perfect_day":
-            currentVal = 0;
+            currentVal = resolvedPerfectDaysCount;
             break;
           default:
             currentVal = 0;
@@ -181,7 +209,7 @@ export default function Achievements({ achievements, player }: AchievementsProps
         categoryTag: getCategoryTag(def.requirementType),
       };
     };
-  }, [defMap, player, totalQuestsCompleted]);
+  }, [defMap, player, totalQuestsCompleted, resolvedPerfectDaysCount]);
 
   // Overall totals
   const totalCount = uniqueAchievements.length;

@@ -68,10 +68,12 @@ import {
 import {
   getOrCreateDailyDirective,
   updateDailyDirectiveOnQuestComplete,
+  getTodayDateString,
 } from "./lib/dailyDirectivesData";
 import type { DailyDirective } from "./data/dailyDirectives";
 import {
   getOrCreatePerfectDayRecord,
+  getCachedPerfectDay,
   evaluateAndProcessPerfectDay,
 } from "./lib/perfectDayData";
 import type { PerfectDayRecord } from "./data/perfectDay";
@@ -88,6 +90,8 @@ import {
   isCoinMagnetActive,
   activateCoinMagnet,
   addDoubleXpCharges,
+  addStreakFreezeCharges,
+  consumeStreakFreezeCharge,
   isPassiveGearOwned,
 } from "./lib/buffsData";
 import {
@@ -418,11 +422,10 @@ function App() {
 
       if (!wasRecorded) return;
 
-      setQuests((current) =>
-        current.map((item) =>
-          item.id === id ? { ...item, completed: true } : item,
-        ),
+      const updatedQuests = quests.map((item) =>
+        item.id === id ? { ...item, completed: true } : item,
       );
+      setQuests(updatedQuests);
 
       const currentTotalXP = player.progress.totalXP + earnedXP;
       const currentLevel = calculateLevel(currentTotalXP);
@@ -470,6 +473,7 @@ function App() {
 
       // 4. Update Daily Directive progress and apply reward if accomplished
       let finalPlayer = updatedPlayer;
+      let latestPerfectDayResult: { record: PerfectDayRecord; earned: boolean; rewardGranted: boolean } | null = null;
       try {
         const directiveResult = await updateDailyDirectiveOnQuestComplete(user.id, quest, updatedPlayer);
         setDailyDirective(directiveResult.directive);
@@ -519,7 +523,12 @@ function App() {
         }
 
         // 4b. Evaluate Perfect Day and apply reward if achieved
-        const perfectDayResult = await evaluateAndProcessPerfectDay(user.id, directiveResult.directive);
+        const perfectDayResult = await evaluateAndProcessPerfectDay(
+          user.id,
+          directiveResult.directive,
+          updatedQuests
+        );
+        latestPerfectDayResult = perfectDayResult;
         setPerfectDayRecord(perfectDayResult.record);
 
         if (perfectDayResult.rewardGranted && perfectDayResult.reward) {
@@ -792,14 +801,11 @@ function App() {
         }
       }
 
-      const allCompletedNow = quests.every((item) =>
-        item.id === id ? true : item.completed,
-      );
       evaluateAchievements(
         finalPlayer,
         newTasksCompleted,
         achievementRows,
-        allCompletedNow || Boolean(perfectDayRecord?.earned),
+        Boolean(latestPerfectDayResult?.earned || perfectDayRecord?.earned),
         user.id,
       );
     } finally {
@@ -857,6 +863,9 @@ function App() {
       if (rewardId === "potion_xp") {
         addDoubleXpCharges(user.id, 3);
         customToast = "Double XP Elixir activated! Next 3 quests award 2X XP.";
+      } else if (rewardId === "streak_freeze") {
+        addStreakFreezeCharges(user.id, 1);
+        customToast = "Chrono Streak Freeze acquired! Shields your streak from your next missed day.";
       } else if (rewardId === "coin_magnet") {
         activateCoinMagnet(user.id, 24);
         customToast = "Coin Magnet activated! +50% coins for 24 hours.";
@@ -1100,8 +1109,26 @@ function App() {
   const endDay = () => {
     if (!player || !user) return;
 
+    const todayStr = getTodayDateString();
     const incompleteCount = quests.filter((quest) => !quest.completed).length;
-    const newStreak = incompleteCount === 0 ? player.progress.currentStreak + 1 : 0;
+
+    let newStreak = player.progress.currentStreak;
+    let isStreakProtected = false;
+    let wasFreezeConsumed = false;
+
+    if (incompleteCount === 0) {
+      newStreak = player.progress.currentStreak + 1;
+    } else {
+      const freezeResult = consumeStreakFreezeCharge(user.id, todayStr);
+      if (freezeResult.consumed || freezeResult.alreadyProtectedToday) {
+        newStreak = player.progress.currentStreak;
+        isStreakProtected = true;
+        wasFreezeConsumed = freezeResult.consumed;
+      } else {
+        newStreak = 0;
+      }
+    }
+
     const newBestStreak = Math.max(player.progress.bestStreak ?? 0, newStreak);
     const bossesSlainCount = getDefeatedBossesCount(user.id);
     const oldRankDef = getRankDefinition(player.progress.rank);
@@ -1147,6 +1174,16 @@ function App() {
       } else if (!hasRankedUp) {
         showEvent("day_complete", "DAY COMPLETE", `+1 Streak — ${newStreak} days`);
       }
+    } else if (isStreakProtected) {
+      showEvent(
+        "day_complete",
+        "CHRONO FREEZE ACTIVATED",
+        `Streak Shielded! Streak preserved at ${newStreak} days.`
+      );
+      showToast("CHRONO STREAK FREEZE ACTIVATED — Streak Preserved!");
+      if (wasFreezeConsumed) {
+        void fetchRewards(user.id).then(setRewards);
+      }
     } else {
       showToast("DAY ENDED — STREAK RESET");
     }
@@ -1155,11 +1192,12 @@ function App() {
       current.map((quest) => ({ ...quest, completed: false })),
     );
 
+    const todayPerfectRecord = getCachedPerfectDay(user.id, todayStr);
     evaluateAchievements(
       updatedPlayer,
       totalQuestsCompleted,
       achievementRows,
-      incompleteCount === 0,
+      incompleteCount === 0 && Boolean(todayPerfectRecord?.earned || perfectDayRecord?.earned),
       user.id,
     );
   };
@@ -1320,7 +1358,13 @@ function App() {
 
               <Route
                 path="/achievements"
-                element={<Achievements achievements={achievements} player={player} />}
+                element={
+                  <Achievements
+                    achievements={achievements}
+                    player={player}
+                    perfectDayCount={perfectDayRecord?.earned ? 1 : undefined}
+                  />
+                }
               />
               <Route path="/awards" element={<Navigate to="/achievements" replace />} />
 
