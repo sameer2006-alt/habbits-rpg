@@ -2,15 +2,14 @@ import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Swords } from "lucide-react";
 import type { BossDef } from "../data/bosses";
+import { getBossArtwork } from "../lib/bossCrestUtils";
 import "./BossVictoryModal.css";
 
 const BOSS_ART_MAP: Record<string, string> = {
-  weekly_ignis: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop",
-  weekly_vortex: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?q=80&w=800&auto=format&fit=crop",
-  weekly_gorgon: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-  monthly_malakor: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop",
-  monthly_titan: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=800&auto=format&fit=crop",
-  monthly_abyss: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800&auto=format&fit=crop",
+  weekly_ignis: "/images/bosses/ignis.jpg",
+  weekly_vortex: "/images/bosses/vortex.jpg",
+  monthly_malakor: "/images/bosses/malakar.jpg",
+  monthly_leviathan: "/images/bosses/leviathan.jpg",
 };
 
 interface BossVictoryModalProps {
@@ -48,7 +47,7 @@ export const BossVictoryModal: React.FC<BossVictoryModalProps> = ({
   const coinsReward = rewardOverride?.coins ?? boss.rewards.coins;
   const statReward = rewardOverride?.statBonus ?? boss.rewards.statBonus;
   const titleReward = rewardOverride?.title ?? boss.rewards.title;
-  const bossImage = BOSS_ART_MAP[boss.id] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
+  const bossImage = boss.artworkUrl || BOSS_ART_MAP[boss.id] || getBossArtwork(boss.id);
 
   return (
     <AnimatePresence>
@@ -84,6 +83,14 @@ export const BossVictoryModal: React.FC<BossVictoryModalProps> = ({
               src={bossImage}
               alt={boss.name}
               className="boss-avatar-img"
+              loading="eager"
+              decoding="async"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                if (!target.src.includes("/images/bosses/ignis.jpg")) {
+                  target.src = "/images/bosses/ignis.jpg";
+                }
+              }}
             />
             <div className="boss-scrim-overlay" aria-hidden="true" />
             <div className="boss-stamp-banner">

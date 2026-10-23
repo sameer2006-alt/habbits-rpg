@@ -281,7 +281,7 @@ How may I assist you?`;
     return `### SYSTEM AI // PROTOCOL OVERVIEW
 **Habbits RPG** transforms personal self-discipline into a dark-fantasy role-playing experience.
 1. **Quests**: Real-life habits (exercise, study, hydration, reading) are your daily battle quests. Complete them daily to earn XP, Soul Coins, and increase Core Attributes.
-2. **Levels & XP**: Every quest grants XP. Your Level is computed purely from your total cumulative XP: \`Level = floor(sqrt(Total_XP / 50))\`.
+2. **Levels & XP**: Every quest grants XP. Your Level is computed purely from your total cumulative XP using progressive threshold scaling (\`Level N requires floor(100 * N^1.35) XP\`).
 3. **Ranks**: 10 hierarchical tiers (F ➔ LEGENDARY) unlocked by conquering XP, task counts, streaks, attribute thresholds, and boss raids.
 4. **Boss Arena**: Weekly and monthly raid bosses take fixed damage whenever you finish a daily quest. Slaying them grants massive rewards!
 5. **Shop**: Spend your earned Soul Coins on buffs like Double XP Elixirs, Coin Magnets, and legendary gear.`;
@@ -291,7 +291,7 @@ How may I assist you?`;
   if (q.includes("xp work") || q.includes("how does xp") || q.includes("level work") || q.includes("how do levels") || q.includes("how much xp")) {
     return `### XP & Level Mechanics
 - **Earning XP**: Completing standard quests rewards 50–150 XP. Custom quests can grant up to **300 XP**.
-- **Level Formula**: \`Level = floor(sqrt(Total_XP / 50))\`.
+- **Level Formula**: Progressive threshold scaling where \`Level N requires floor(100 * N^1.35) XP\`. Level is calculated dynamically from cumulative Total XP.
 - **Level Independence**: Your Level measures cumulative lifetime effort and never decreases or resets.
 - **Buffs**: Using a **Double XP Elixir** doubles quest XP for your next 3 tasks, and the **Blade of Focus** adds a permanent +10% passive XP multiplier!`;
   }
@@ -300,15 +300,15 @@ How may I assist you?`;
   if (q.includes("rank work") || q.includes("how do ranks") || q.includes("how to rank up") || q.includes("how do i rank up")) {
     return `### The 10 Authoritative Ranks
 Progression proceeds sequentially from **F ➔ LEGENDARY**:
-1. **F (Awakened Recruit)**: Baseline (0 XP)
+1. **F (Awakened Recruit)**: Baseline (0 XP, 0 Tasks, 0 Streak)
 2. **E (Trainee Hunter)**: 500 XP, 8 Tasks, 2-day Streak
-3. **D (Scout Vanguard)**: 1,500 XP, 25 Tasks, 4-day Streak
-4. **C (Elite Striker)**: 4,500 XP, 60 Tasks, 7-day Streak + Highest Stat ≥ 20
-5. **B (Shadow Blade)**: 9,000 XP, 100 Tasks, 10-day Streak
-6. **A (Abyssal Conqueror)**: 14,000 XP, 150 Tasks, 12-day Streak + Highest Stat ≥ 35
+3. **D (Scout Vanguard)**: 1,500 XP, 20 Tasks, 3-day Streak
+4. **C (Iron Striker)**: 3,500 XP, 45 Tasks, 5-day Streak
+5. **B (Silver Slayer)**: 7,000 XP, 80 Tasks, 7-day Streak + Any Stat ≥ 20
+6. **A (Elite Champion)**: 12,500 XP, 130 Tasks, 10-day Streak + Any Stat ≥ 35
 7. **S (Shadow Monarch)**: 20,000 XP, 200 Tasks, 14-day Streak + Slay 1 Boss
 8. **SS (Grand Sovereign)**: 32,000 XP, 300 Tasks, 21-day Streak + Slay 2 Bosses
-9. **HEROIC (Paragon)**: 50,000 XP, 450 Tasks, 30-day Streak + Slay 3 Bosses
+9. **HEROIC (Heroic Paragon)**: 50,000 XP, 450 Tasks, 30-day Streak + Slay 3 Bosses
 10. **LEGENDARY (Mythic God of Discipline)**: 75,000 XP, 650 Tasks, 45-day Streak + All 6 Stats ≥ 50
 
 *Ranks are permanent: your rank will never demote even if your streak breaks.*`;

@@ -29,7 +29,7 @@ import {
 } from "../lib/bossData";
 import { GlowButton } from "../components/ui/GlowButton";
 import { BossCrest, BossAtmosphere } from "../components/BossCrest";
-import { normalizeBossKey } from "../lib/bossCrestUtils";
+import { normalizeBossKey, getBossArtwork } from "../lib/bossCrestUtils";
 import BossVictoryModal from "../components/BossVictoryModal";
 import "./Boss.css";
 
@@ -351,6 +351,19 @@ export default function Boss({
             <BossAtmosphere bossId={currentBoss.id} />
             <div className="boss-hero-emblem-container">
               <BossCrest bossId={currentBoss.id} size="hero" watermark={true} />
+            </div>
+            {/* High-Fidelity Character Artwork Stage (Phase 5) */}
+            <div className="boss-hero-character-stage" aria-hidden="true">
+              <img
+                src={currentBoss.artworkUrl || getBossArtwork(currentBoss.id)}
+                alt={currentBoss.name}
+                className="boss-hero-character-art"
+                loading="eager"
+                decoding="async"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = "none";
+                }}
+              />
             </div>
             <div className="boss-hero-gradient-overlay" />
             <div className="boss-hero-vignette" />
@@ -928,8 +941,19 @@ export default function Boss({
                   >
                     <div className="boss-rotation-item-top">
                       <div className="boss-rotation-item-left">
+                        <div className="boss-rotation-avatar-socket">
+                          <img
+                            src={boss.artworkUrl || getBossArtwork(boss.id)}
+                            alt={boss.name}
+                            className="boss-rotation-avatar-img"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
                         <div className="boss-rotation-crest-socket">
-                          <BossCrest bossId={boss.id} size={26} />
+                          <BossCrest bossId={boss.id} size={22} />
                         </div>
                         <div>
                           <span style={{ fontSize: "0.625rem", color: "#ac8884", textTransform: "uppercase" }}>

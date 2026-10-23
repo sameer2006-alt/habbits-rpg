@@ -31,7 +31,7 @@ Habbits RPG is a gamified productivity and habit-transformation system. Real-wor
 
 ### PROGRESSION MECHANICS
 1. XP & LEVELS:
-   - Level is calculated strictly from Total XP: Level = floor(sqrt(Total_XP / 50)).
+   - Level is calculated strictly from Total XP using progressive threshold scaling: Level N requires floor(100 * N^1.35) XP.
    - Level measures cumulative effort and is independent of rank.
 
 2. AUTHORITATIVE RANKS (10 TIERS):

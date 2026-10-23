@@ -19,6 +19,7 @@ export interface BossDef {
   damagePerQuest: number;
   avatarColor: string;
   avatarGlow: string;
+  artworkUrl: string;
   lore: string;
   rewards: BossReward;
   recommendedLevel: number;
@@ -35,6 +36,7 @@ export const BOSSES: BossDef[] = [
     damagePerQuest: 45,
     avatarColor: "#ef4444",
     avatarGlow: "rgba(239, 68, 68, 0.4)",
+    artworkUrl: "/images/bosses/ignis.jpg",
     lore: "Born from missed alarms and procrastination. Its embers will burn your momentum unless quenched through dedicated daily discipline across the week.",
     rewards: {
       xp: 600,
@@ -53,6 +55,7 @@ export const BOSSES: BossDef[] = [
     damagePerQuest: 50,
     avatarColor: "#8b5cf6",
     avatarGlow: "rgba(139, 92, 246, 0.4)",
+    artworkUrl: "/images/bosses/vortex.jpg",
     lore: "A swirling vortex of social media scrolling and endless distraction. Strike it down through sustained concentration and deep work.",
     rewards: {
       xp: 750,
@@ -73,6 +76,7 @@ export const BOSSES: BossDef[] = [
     damagePerQuest: 50,
     avatarColor: "#ec4899",
     avatarGlow: "rgba(236, 72, 153, 0.45)",
+    artworkUrl: "/images/bosses/malakar.jpg",
     lore: "The sovereign titan of comfortable excuses. He feeds on delayed goals and broken promises. Defeat him across 30 days to claim legendary spoils.",
     rewards: {
       xp: 2500,
@@ -91,6 +95,7 @@ export const BOSSES: BossDef[] = [
     damagePerQuest: 60,
     avatarColor: "#06b6d4",
     avatarGlow: "rgba(6, 182, 212, 0.45)",
+    artworkUrl: "/images/bosses/leviathan.jpg",
     lore: "Dwelling in the deepest trenches of unstructured time. Only an ironclad daily routine can pierce its abyssal armor.",
     rewards: {
       xp: 3000,

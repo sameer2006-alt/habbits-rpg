@@ -1,6 +1,9 @@
+// @ts-nocheck
 // Supabase Edge Function: system-ai
 // Runtime: Deno
 // Purpose: Authenticated, trusted AI assistant for Habbits RPG powered by Gemini API.
+
+declare const Deno: any;
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
@@ -18,18 +21,18 @@ const AUTHORITATIVE_GAME_RULES = `
 ### HABBITS RPG AUTHORITATIVE GAME RULES & KNOWLEDGE BASE
 - **Purpose**: Transform real-life discipline, productivity, and study into an epic dark-fantasy RPG.
 - **Attributes**: Strength, Intelligence, Vitality, Focus, Discipline, Consistency.
-- **Level Formula**: Level = floor(sqrt(Total_XP / 50)). Level is purely XP-driven and never demotes.
+- **Level Formula**: Level is calculated dynamically from Total XP using progressive threshold scaling: Level N requires floor(100 * N^1.35) XP. Level is purely XP-driven, cumulative, and never demotes.
 - **10 Authoritative Ranks**:
-  0. F (The Novice): 0 XP, 0 Tasks, 0 Streak
-  1. E (The Apprentice): 100 XP, 5 Tasks, 2 Streak
-  2. D (The Practitioner): 500 XP, 15 Tasks, 5 Streak
-  3. C (The Specialist): 1,500 XP, 35 Tasks, 7 Streak
-  4. B (The Adept): 4,000 XP, 75 Tasks, 14 Streak
-  5. A (The Master): 10,000 XP, 150 Tasks, 21 Streak
-  6. S (The Grandmaster): 25,000 XP, 300 Tasks, 30 Streak. Special Condition: Slay 1 Boss & have at least one attribute >= 35.
-  7. SS (The Ascendant): 60,000 XP, 500 Tasks, 45 Streak. Special Condition: Slay 2 Bosses & have all 6 core attributes >= 25.
-  8. HEROIC (The Sovereign): 120,000 XP, 750 Tasks, 60 Streak. Special Condition: Slay 3 Bosses & have all 6 core attributes >= 40.
-  9. LEGENDARY (The Transcendent): 250,000 XP, 1,000 Tasks, 90 Streak. Special Condition: Slay 4 Bosses & have all 6 core attributes >= 50.
+  0. F (Awakened Recruit): 0 XP, 0 Tasks, 0 Streak
+  1. E (Trainee Hunter): 500 XP, 8 Tasks, 2 Streak
+  2. D (Scout Vanguard): 1,500 XP, 20 Tasks, 3 Streak
+  3. C (Iron Striker): 3,500 XP, 45 Tasks, 5 Streak
+  4. B (Silver Slayer): 7,000 XP, 80 Tasks, 7 Streak. Special Condition: Any Core Stat >= 20
+  5. A (Elite Champion): 12,500 XP, 130 Tasks, 10 Streak. Special Condition: Any Core Stat >= 35
+  6. S (Shadow Monarch): 20,000 XP, 200 Tasks, 14 Streak. Special Condition: Slay At Least 1 Boss
+  7. SS (Grand Sovereign): 32,000 XP, 300 Tasks, 21 Streak. Special Condition: Slay At Least 2 Bosses
+  8. HEROIC (Heroic Paragon): 50,000 XP, 450 Tasks, 30 Streak. Special Condition: Slay At Least 3 Bosses
+  9. LEGENDARY (Mythic God of Discipline): 75,000 XP, 650 Tasks, 45 Streak. Special Condition: All 6 Core Attributes >= 50
 - **Anti-Demotion Guarantee**: Ranks are permanent milestones; players NEVER demote even if current streak resets to 0. Historical best streak is honored.
 - **Boss Arena**:
   - Weekly Bosses (7-day reset): Ignis, Flame of Lethargy (1200 HP, 45 DMG/quest, ~27 quests), Vortex, Mind Fog (1500 HP, 50 DMG/quest, 30 quests).
@@ -44,6 +47,20 @@ const AUTHORITATIVE_GAME_RULES = `
   - Strict Idempotency: Rewards can only be claimed once per directive.
 - **Shop**: Players spend Soul Coins on Double XP Elixir (next 3 quests), Coin Magnet (+50% coins), Blade of Focus (+10% passive XP), and custom rewards.
 `.trim();
+
+function getRequiredXP(level: number): number {
+  return Math.floor(100 * Math.pow(level, 1.35));
+}
+
+function calculateLevel(totalXP: number): number {
+  let level = 1;
+  let remaining = totalXP;
+  while (remaining >= getRequiredXP(level)) {
+    remaining -= getRequiredXP(level);
+    level++;
+  }
+  return level;
+}
 
 function classifyQueryIntent(query: string, history: any[]): "game" | "mixed" | "general" | "help" {
   const q = query.toLowerCase().trim();
@@ -128,13 +145,16 @@ serve(async (req: Request) => {
     }
 
     let user: any = null;
+    let supabaseClient: any = null;
     if (token !== supabaseAnonKey) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
-      const { data } = await supabaseAuth.auth.getUser();
+      const { data } = await supabaseClient.auth.getUser();
       user = data?.user || null;
     }
+
+    const supabase = supabaseClient || createClient(supabaseUrl, supabaseAnonKey);
 
     const isAnonClient = token === supabaseAnonKey || apiKeyHeader === supabaseAnonKey;
     if (!user && !isAnonClient) {
@@ -214,31 +234,35 @@ serve(async (req: Request) => {
     };
 
     if (user) {
-      const [{ data: progress }, { data: stats }, { count: questCount }] = await Promise.all([
-        supabase.from("player_progress").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("player_stats").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("quest_completions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      ]);
+      try {
+        const [{ data: progress }, { data: stats }, { count: questCount }] = await Promise.all([
+          supabase.from("player_progress").select("*").eq("user_id", user.id).maybeSingle(),
+          supabase.from("player_stats").select("*").eq("user_id", user.id).maybeSingle(),
+          supabase.from("quest_completions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        ]);
 
-      if (progress) {
-        playerContext.rank = progress.rank ?? "F";
-        playerContext.level = progress.level ?? 1;
-        playerContext.totalXP = progress.total_xp ?? 0;
-        playerContext.coins = progress.coins ?? 0;
-        playerContext.currentStreak = progress.current_streak ?? 0;
-        playerContext.bestStreak = progress.best_streak ?? 0;
+        if (progress) {
+          playerContext.rank = progress.rank ?? "F";
+          playerContext.totalXP = typeof progress.total_xp === "number" ? progress.total_xp : 0;
+          playerContext.level = calculateLevel(playerContext.totalXP);
+          playerContext.coins = typeof progress.coins === "number" ? progress.coins : 0;
+          playerContext.currentStreak = typeof progress.current_streak === "number" ? progress.current_streak : 0;
+          playerContext.bestStreak = typeof progress.best_streak === "number" ? progress.best_streak : 0;
+        }
+        if (stats) {
+          playerContext.stats = {
+            strength: typeof stats.strength === "number" ? stats.strength : 10,
+            intelligence: typeof stats.intelligence === "number" ? stats.intelligence : 10,
+            vitality: typeof stats.vitality === "number" ? stats.vitality : 10,
+            focus: typeof stats.focus === "number" ? stats.focus : 10,
+            discipline: typeof stats.discipline === "number" ? stats.discipline : 10,
+            consistency: typeof stats.consistency === "number" ? stats.consistency : 10,
+          };
+        }
+        playerContext.tasksCompleted = typeof questCount === "number" ? questCount : 0;
+      } catch (dbErr) {
+        console.warn("[System AI] Database query error encountered:", dbErr);
       }
-      if (stats) {
-        playerContext.stats = {
-          strength: stats.strength ?? 10,
-          intelligence: stats.intelligence ?? 10,
-          vitality: stats.vitality ?? 10,
-          focus: stats.focus ?? 10,
-          discipline: stats.discipline ?? 10,
-          consistency: stats.consistency ?? 10,
-        };
-      }
-      playerContext.tasksCompleted = questCount ?? 0;
     }
 
     const playerContextPrompt = `
@@ -301,7 +325,7 @@ ${playerContextPrompt}
     if (!geminiApiKey) {
       const allEnv = Deno.env.toObject();
       for (const [k, v] of Object.entries(allEnv)) {
-        if (k.includes("GEMINI_API_KEY") && v) {
+        if (k.includes("GEMINI_API_KEY") && typeof v === "string" && v) {
           geminiApiKey = v.trim();
           keySource = k.replace(/[\r\n]/g, "\\n");
           break;
